@@ -6,7 +6,8 @@ datas, binaries, hidden = [], [], []
 for pkg in ("spriteguru", "uvicorn", "fastapi", "starlette", "onnxruntime", "rembg", "skimage", "av", "numba",
             "llvmlite", "playwright", "fal_client", "openai", "keyring", "pymatting"):
     d, b, h = collect_all(pkg)
-    datas += d
+    # __pycache__ holds the build machine's numba JIT caches, which are tied to its paths and CPU
+    datas += [(src, dst) for src, dst in d if "__pycache__" not in src.replace("\\", "/").split("/")]
     binaries += b
     hidden += h
 hidden += collect_submodules("uvicorn") + ["keyring.backends.macOS", "keyring.backends.Windows",
