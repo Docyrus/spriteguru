@@ -72,6 +72,23 @@ def test_spriteplay_library_and_project_migrate_without_asset_loss(tmp_path, mon
     assert not (migrated.root / ".spriteguru" / "sync").exists()
 
 
+def test_migrated_local_preferences_survive_the_next_open(tmp_path):
+    project = _project(tmp_path, "Reopen")
+    (project / ".spriteplay").mkdir()
+    (project / ".spriteplay" / "local.json").write_text(json.dumps({"active_character": "knight"}))
+
+    from spriteguru.project import Project
+
+    first = Project.open(project)
+    first.config.active_character = "wizard"
+    first.save()
+    again = Project.open(project)
+
+    assert first.config.active_character == "wizard"
+    assert again.config.active_character == "wizard"
+    assert not (project / ".spriteplay" / "local.json").exists()
+
+
 def test_both_default_roots_remain_visible_without_overwrite(tmp_path, monkeypatch):
     home = tmp_path / "home"
     _default_home(monkeypatch, home)

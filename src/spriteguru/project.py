@@ -34,15 +34,17 @@ def local_dir(root: Path | str, migrate: bool = True) -> Path:
         if new.exists() or not old.is_dir():
             return new
         return old
-    if not old.is_dir():
+    current_path, legacy_path = new / "local.json", old / "local.json"
+    if not legacy_path.is_file():
         return new
     try:
-        current_path, legacy_path = new / "local.json", old / "local.json"
         current = read_json(current_path) if current_path.is_file() else {}
-        legacy = read_json(legacy_path) if legacy_path.is_file() else {}
+        legacy = read_json(legacy_path)
         merged = {k: current.get(k) for k in LOCAL_FIELDS}
         merged.update({k: legacy[k] for k in LOCAL_FIELDS if k in legacy})
         write_json(current_path, merged)
+        # Migrated once: a legacy file left behind would win again on every later open.
+        legacy_path.unlink()
     except OSError as e:
         print(f"spriteguru: couldn't migrate {old} to {new.name}: {e}", file=sys.stderr, flush=True)
         return old
@@ -110,7 +112,7 @@ class Project:
     @classmethod
     def open(cls, root: Path | str, *, migrate: bool = True) -> "Project":
         """Open a project. Machine-local fields come from .spriteguru/local.json; a project that still
-        keeps them in project.json has them moved there (C13), unless `migrate` is False (the
+        keeps them in project.json has them moved there (OS4), unless `migrate` is False (the
         gallery only reads)."""
         root = Path(root)
         path = root / "project.json"
