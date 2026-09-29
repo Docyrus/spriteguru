@@ -23,10 +23,10 @@ def test_api(rec, work):
     port = free_port()
     srv = _serve(proj, port, {})
     base = f"http://127.0.0.1:{port}"
-    H = {"X-SpriteKit-Token": "t0k"}
+    H = {"X-SpriteGuru-Token": "t0k"}
     try:
         rec.check(S, "no token -> 401", httpx.get(f"{base}/api/project").status_code == 401)
-        rec.check(S, "wrong token -> 401", httpx.get(f"{base}/api/project", headers={"X-SpriteKit-Token": "x"}).status_code == 401)
+        rec.check(S, "wrong token -> 401", httpx.get(f"{base}/api/project", headers={"X-SpriteGuru-Token": "x"}).status_code == 401)
         rec.check(S, "foreign Host header -> 403 (DNS rebinding)",
                   httpx.get(f"{base}/api/project", headers={**H, "Host": "evil.example"}).status_code == 403)
         r = httpx.options(f"{base}/api/project", headers={"Origin": "https://evil.example",

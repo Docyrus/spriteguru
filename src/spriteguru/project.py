@@ -10,49 +10,56 @@ import sys
 from pathlib import Path
 
 from .env import get as app_env
-from .spec import CharacterRecord, CloudLink, ProjectConfig, SpriteSpec, Style
+from .spec import CharacterRecord, ProjectConfig, SpriteSpec, Style
 
 
 class ProjectError(RuntimeError):
     pass
 
 
-# machine-local project state (C13): a path on one machine and a choice that changes every few
-# minutes would conflict constantly if they synced, so they live in .spriteplay/local.json
+# Machine-local project state lives outside project.json.
 LOCAL_FIELDS = ("active_character", "asset_folder")
-LOCAL_DIR = ".spriteplay"
-LEGACY_LOCAL_DIR = ".spriteguru"  # the folder's name before SpriteGuru became SpritePlay (N5)
-_KEEP = object()
+LOCAL_DIR = ".spriteguru"
+LEGACY_LOCAL_DIR = ".spriteplay"
 
 
 def local_dir(root: Path | str, migrate: bool = True) -> Path:
-    """A project's machine-local folder. One still under its SpriteGuru name is renamed when the
-    project is opened for writing, and read where it is otherwise; if both exist the new one wins (N5).
-    A rename that fails leaves the old folder in use for this run (N13)."""
+    """Return the canonical local folder, migrating only user preferences from SpritePlay.
+
+    Sync indexes and conflict metadata are deliberately left behind and never copied.
+    """
     root = Path(root)
     new, old = root / LOCAL_DIR, root / LEGACY_LOCAL_DIR
-    if new.exists() or not old.is_dir():
-        return new
     if not migrate:
-        return old
-    try:
-        os.rename(old, new)
-    except OSError as e:
-        if new.exists():  # another process renamed it first
+        if new.exists() or not old.is_dir():
             return new
-        print(f"spriteguru: couldn't rename {old} to {new.name}: {e}", file=sys.stderr, flush=True)
         return old
-    ignore_local(root)  # N7: git ignores the renamed folder from the moment it exists
+    if not old.is_dir():
+        return new
+    try:
+        current_path, legacy_path = new / "local.json", old / "local.json"
+        current = read_json(current_path) if current_path.is_file() else {}
+        legacy = read_json(legacy_path) if legacy_path.is_file() else {}
+        merged = {k: current.get(k) for k in LOCAL_FIELDS}
+        merged.update({k: legacy[k] for k in LOCAL_FIELDS if k in legacy})
+        write_json(current_path, merged)
+    except OSError as e:
+        print(f"spriteguru: couldn't migrate {old} to {new.name}: {e}", file=sys.stderr, flush=True)
+        return old
+    except ValueError as e:
+        print(f"spriteguru: couldn't read {old / 'local.json'}: {e}", file=sys.stderr, flush=True)
+        return old
+    ignore_local(root)
     return new
 
 
 def ignore_local(root: Path) -> None:
-    """Machine-local state never goes into the game repository (or the cloud). An old `.spriteguru/`
-    line stays, so a machine still on the SpriteGuru build doesn't add it back (N7)."""
+    """Machine-local state never goes into the game repository."""
     gi = Path(root) / ".gitignore"
     text = gi.read_text() if gi.is_file() else ""
-    if f"{LOCAL_DIR}/" not in text.split():
-        gi.write_text(text + ("" if not text or text.endswith("\n") else "\n") + f"{LOCAL_DIR}/\n")
+    missing = [f"{name}/" for name in (LOCAL_DIR, LEGACY_LOCAL_DIR) if f"{name}/" not in text.split()]
+    if missing:
+        gi.write_text(text + ("" if not text or text.endswith("\n") else "\n") + "\n".join(missing) + "\n")
 
 
 def slug(text: str) -> str:
@@ -102,7 +109,7 @@ class Project:
 
     @classmethod
     def open(cls, root: Path | str, *, migrate: bool = True) -> "Project":
-        """Open a project. Machine-local fields come from .spriteplay/local.json; a project that still
+        """Open a project. Machine-local fields come from .spriteguru/local.json; a project that still
         keeps them in project.json has them moved there (C13), unless `migrate` is False (the
         gallery only reads)."""
         root = Path(root)
@@ -115,7 +122,7 @@ class Project:
         legacy = {k: raw[k] for k in LOCAL_FIELDS if k in raw}
         data = {**raw, **{k: local.get(k, legacy.get(k)) for k in LOCAL_FIELDS}}
         proj = cls(root, ProjectConfig.model_validate(data))
-        if migrate and legacy:
+        if migrate and (legacy or "cloud" in raw or (root / LEGACY_LOCAL_DIR / "local.json").is_file()):
             proj.save()
         return proj
 
@@ -135,23 +142,10 @@ class Project:
                 return cls.open(hits[0].parent)
         raise ProjectError("no project found; pass --project or run `spriteguru init`")
 
-    def save(self, *, cloud=_KEEP) -> None:
-        """Write project.json and .spriteplay/local.json. The `cloud` link is the one on disk unless
-        `cloud` is given (link, unlink, a new owner): the engine holds its config in memory for a whole
-        session, and a settings save must never drop a link that sync wrote meanwhile."""
-        if cloud is _KEEP:
-            path = self.root / "project.json"
-            try:
-                disk = read_json(path).get("cloud") if path.is_file() else None
-            except ValueError:
-                disk = None
-            self.config.cloud = CloudLink.model_validate(disk) if disk else None
-        else:
-            self.config.cloud = cloud
+    def save(self) -> None:
+        """Write shared project config and machine-local preferences separately."""
         data = self.config.model_dump(mode="json")
         local = {k: data.pop(k) for k in LOCAL_FIELDS}
-        if data.get("cloud") is None:
-            data.pop("cloud", None)
         write_json(local_dir(self.root) / "local.json", local)
         write_json(self.root / "project.json", data)
         ignore_local(self.root)

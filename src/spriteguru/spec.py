@@ -62,12 +62,6 @@ class Settings(BaseModel):
     judge_disabled: list[str] = []  # judge issue types switched off by calibration (precision < 0.8)
 
 
-class CloudLink(BaseModel):
-    """The cloud project this folder syncs with; shared by every machine (cloud plan 6.1)."""
-    project_id: str
-    owner_id: str
-
-
 class ProjectConfig(BaseModel):
     name: str
     style: Style
@@ -76,7 +70,6 @@ class ProjectConfig(BaseModel):
     asset_folder: str | None = None  # game asset folder; export copies final/ there
     settings: Settings = Settings()
     active_character: str | None = None  # the subject every studio tab follows (P8)
-    cloud: CloudLink | None = None  # set once the project is linked to a workspace
 
 
 class CharacterRecord(BaseModel):

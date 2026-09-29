@@ -27,7 +27,7 @@ def _start(port: int, env: dict, unset: tuple[str, ...] = ()) -> subprocess.Pope
         if p.poll() is not None:
             break
         try:
-            if httpx.get(f"http://127.0.0.1:{port}/api/library", headers={"X-SpriteKit-Token": "t0k"}).status_code == 200:
+            if httpx.get(f"http://127.0.0.1:{port}/api/library", headers={"X-SpriteGuru-Token": "t0k"}).status_code == 200:
                 return p
         except httpx.HTTPError:
             pass
@@ -45,7 +45,7 @@ def _stop(p: subprocess.Popen) -> None:
 
 
 def _client(port: int) -> httpx.Client:
-    return httpx.Client(base_url=f"http://127.0.0.1:{port}", headers={"X-SpriteKit-Token": "t0k"}, timeout=120)
+    return httpx.Client(base_url=f"http://127.0.0.1:{port}", headers={"X-SpriteGuru-Token": "t0k"}, timeout=120)
 
 
 def _wait_views(c: httpx.Client, name: str) -> dict:

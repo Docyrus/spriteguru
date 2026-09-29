@@ -1,0 +1,120 @@
+/* Design tokens. Two themes: "light table" (cool paper under a backlight) and "graphite desk".
+   Blue pencil is the accent and red pencil marks failures: the colours animators rough with,
+   which also tint the onion skin (previous frame red, next frame blue). Neutral surfaces keep
+   sprite colours honest. */
+
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', var(--font-ui);
+
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 20px;
+  --fs-2xl: 28px;
+  --fs-3xl: 44px;
+
+  --r-xs: 3px;
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+
+  --rail-w: 76px;
+  --top-h: 49px; /* 48 inside the border: the 32 px mark keeps 8 px clear above and below */
+
+  --bg: #e2e4e8;
+  --surface: #f5f6f8;
+  --surface-2: #ffffff;
+  --surface-3: #eaecf0;
+  --line: #d2d6dd;
+  --line-strong: #b5bbc6;
+  --ink: #15181d;
+  --ink-2: #4c5361;
+  --ink-3: #7a8290;
+  --accent: #2c6bd0;
+  --accent-ink: #1d56ad;
+  --accent-soft: #dce7f9;
+  --on-accent: #ffffff;
+  --red: #cf4236;
+  --red-soft: #f8dcd8;
+  --ok: #1b8454;
+  --ok-soft: #d4efe0;
+  --warn: #9f6507;
+  --warn-soft: #f6e6c3;
+  --checker-a: #ffffff;
+  --checker-b: #e6e8ec;
+  --checker-dark-a: #0f1012; /* additive effects: near-black in both themes */
+  --checker-dark-b: #1a1c20;
+  --checker-dark-ink: #a4a8b0;
+  --stage: #d7dadf;
+  --overlay-region: #2c6bd0;
+  --overlay-box: #1b8454;
+  --overlay-anchor: #cf4236;
+  --shadow-pop: 0 1px 0 rgba(16, 24, 40, 0.04), 0 12px 32px -10px rgba(16, 24, 40, 0.28);
+  --focus: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #1d1f22;
+    --surface: #27292d;
+    --surface-2: #303337;
+    --surface-3: #2c2e32;
+    --line: #3a3d43;
+    --line-strong: #4f535b;
+    --ink: #ecebe7;
+    --ink-2: #aeb1b7;
+    --ink-3: #80848c;
+    --accent: #6ea4f4;
+    --accent-ink: #92bbf7;
+    --accent-soft: #22334c;
+    --on-accent: #0b1829;
+    --red: #f07a6f;
+    --red-soft: #432523;
+    --ok: #62c795;
+    --ok-soft: #1c3a2b;
+    --warn: #e8b65a;
+    --warn-soft: #3b301f;
+    --checker-a: #34373c;
+    --checker-b: #2b2d31;
+    --stage: #18191c;
+    --overlay-region: #6ea4f4;
+    --overlay-box: #62c795;
+    --overlay-anchor: #f07a6f;
+    --shadow-pop: 0 1px 0 rgba(0, 0, 0, 0.2), 0 16px 40px -12px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #1d1f22;
+  --surface: #27292d;
+  --surface-2: #303337;
+  --surface-3: #2c2e32;
+  --line: #3a3d43;
+  --line-strong: #4f535b;
+  --ink: #ecebe7;
+  --ink-2: #aeb1b7;
+  --ink-3: #80848c;
+  --accent: #6ea4f4;
+  --accent-ink: #92bbf7;
+  --accent-soft: #22334c;
+  --on-accent: #0b1829;
+  --red: #f07a6f;
+  --red-soft: #432523;
+  --ok: #62c795;
+  --ok-soft: #1c3a2b;
+  --warn: #e8b65a;
+  --warn-soft: #3b301f;
+  --checker-a: #34373c;
+  --checker-b: #2b2d31;
+  --stage: #18191c;
+  --overlay-region: #6ea4f4;
+  --overlay-box: #62c795;
+  --overlay-anchor: #f07a6f;
+  --shadow-pop: 0 1px 0 rgba(0, 0, 0, 0.2), 0 16px 40px -12px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}

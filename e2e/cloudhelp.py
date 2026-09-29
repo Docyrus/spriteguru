@@ -51,7 +51,7 @@ class Engine:
             if self.proc.poll() is not None:
                 break
             try:
-                if httpx.get(self.url("/api/library"), headers={"X-SpriteKit-Token": "t0k"}).status_code == 200:
+                if httpx.get(self.url("/api/library"), headers={"X-SpriteGuru-Token": "t0k"}).status_code == 200:
                     return
             except httpx.HTTPError:
                 pass
@@ -63,7 +63,7 @@ class Engine:
         return f"http://127.0.0.1:{self.port}{path}"
 
     def client(self) -> httpx.Client:
-        return httpx.Client(base_url=self.url(), headers={"X-SpriteKit-Token": "t0k"}, timeout=120)
+        return httpx.Client(base_url=self.url(), headers={"X-SpriteGuru-Token": "t0k"}, timeout=120)
 
     def stop(self) -> None:
         self.proc.terminate()

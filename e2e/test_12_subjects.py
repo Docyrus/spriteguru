@@ -247,7 +247,7 @@ def test_image_references_api(rec, work):
     port = free_port()
     srv = _serve(proj, port, {})
     try:
-        with httpx.Client(base_url=f"http://127.0.0.1:{port}", headers={"X-SpriteKit-Token": "t0k"}, timeout=120) as cl:
+        with httpx.Client(base_url=f"http://127.0.0.1:{port}", headers={"X-SpriteGuru-Token": "t0k"}, timeout=120) as cl:
             names = [a["action"] for a in cl.get("/api/actions", params={"kind": "vehicle"}).json()]
             rec.check(S, "API lists the actions of a kind in library order", names == ["idle", "move", "fire", "destroyed"],
                       names, ["K1"])
@@ -424,7 +424,7 @@ def test_layout_strip_and_confirm(rec, work):
     port = free_port()
     srv = _serve(proj, port, {})
     try:
-        with httpx.Client(base_url=f"http://127.0.0.1:{port}", headers={"X-SpriteKit-Token": "t0k"}, timeout=180) as cl:
+        with httpx.Client(base_url=f"http://127.0.0.1:{port}", headers={"X-SpriteGuru-Token": "t0k"}, timeout=180) as cl:
             jid, cid = j["id"], j["candidates"][0]["id"]
             cells = [list(f["region"]) for f in rep["frames"]]
             wide = [[max(0, x0 - 24), y0, x1, y1] if i % 2 == 0 else [x0, y0, x1, y1]

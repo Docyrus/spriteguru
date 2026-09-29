@@ -12,6 +12,8 @@ from pathlib import Path
 from .env import get as app_env
 
 SERVICE = "spriteguru"
+LEGACY_SERVICE = "spritekit"
+CLOUD_SERVICES = ("spriteplay-cloud", "spriteguru-cloud")
 ENV = {
     "openai": "OPENAI_API_KEY",
     "fal": "FAL_KEY",
@@ -70,6 +72,24 @@ def _keyring():
         return None
 
 
+def _stored(kr, provider: str) -> str | None:
+    try:
+        value = kr.get_password(SERVICE, provider)
+        if value is not None:
+            return value
+        value = kr.get_password(LEGACY_SERVICE, provider)
+        if value is None:
+            return None
+        try:
+            kr.set_password(SERVICE, provider, value)
+            kr.delete_password(LEGACY_SERVICE, provider)
+        except Exception:
+            pass
+        return value
+    except Exception:
+        return None
+
+
 def get(provider: str) -> str | None:
     if provider in ENV:
         for name in _env_names(provider):
@@ -78,10 +98,7 @@ def get(provider: str) -> str | None:
     kr = _keyring()
     if kr is None:
         return None
-    try:
-        return kr.get_password(SERVICE, provider)
-    except Exception:
-        return None
+    return _stored(kr, provider)
 
 
 def set(provider: str, value: str) -> None:  # noqa: A001 - mirrors `spriteguru keys set`
@@ -96,10 +113,24 @@ def set(provider: str, value: str) -> None:  # noqa: A001 - mirrors `spriteguru 
 def delete(provider: str) -> None:
     kr = _keyring()
     if kr is not None:
-        try:
-            kr.delete_password(SERVICE, provider)
-        except Exception:
-            pass
+        for service in (SERVICE, LEGACY_SERVICE):
+            try:
+                kr.delete_password(service, provider)
+            except Exception:
+                pass
+
+
+def cleanup_cloud_credentials() -> None:
+    """Delete obsolete desktop-cloud credentials without contacting a server."""
+    kr = _keyring()
+    if kr is None:
+        return
+    for service in CLOUD_SERVICES:
+        for username in ("refresh_token", "account"):
+            try:
+                kr.delete_password(service, username)
+            except Exception:
+                pass
 
 
 def status() -> dict[str, dict[str, object]]:
@@ -109,10 +140,7 @@ def status() -> dict[str, dict[str, object]]:
         source = f"env:{hit}" if hit else None
         if source is None:
             kr = _keyring()
-            try:
-                if kr is not None and kr.get_password(SERVICE, provider):
-                    source = "keychain"
-            except Exception:
-                pass
+            if kr is not None and _stored(kr, provider):
+                source = "keychain"
         out[provider] = {"configured": source is not None, "source": source, "env": env}
     return out

@@ -33,7 +33,7 @@ def test_inbetween_and_judge_calibration(rec, work):
     env = {"SPRITEGURU_SYNTH_DEFECTS": "judge=stray_marks:1"}
     srv = _serve(proj, port, env)
     try:
-        with httpx.Client(base_url=f"http://127.0.0.1:{port}", headers={"X-SpriteKit-Token": "t0k"}, timeout=120) as c:
+        with httpx.Client(base_url=f"http://127.0.0.1:{port}", headers={"X-SpriteGuru-Token": "t0k"}, timeout=120) as c:
             c.post("/api/animations", json={"character": "knight", "action": "hurt"}).raise_for_status()
             job = c.post("/api/animations/knight-hurt-E/jobs", json={"seed": 5}).json()
             for _ in range(600):

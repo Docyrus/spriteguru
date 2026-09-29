@@ -47,7 +47,7 @@ def _serve(proj: Path, port: int, env: dict) -> subprocess.Popen:
         if p.poll() is not None:
             break
         try:
-            if httpx.get(f"http://127.0.0.1:{port}/api/project", headers={"X-SpriteKit-Token": "t0k"}).status_code == 200:
+            if httpx.get(f"http://127.0.0.1:{port}/api/project", headers={"X-SpriteGuru-Token": "t0k"}).status_code == 200:
                 return p
         except httpx.HTTPError:
             pass
@@ -74,7 +74,7 @@ def test_cancel_and_concurrency(rec, work):
        "--approve", "--project", str(proj))
     port = free_port()
     srv = _serve(proj, port, {"SPRITEGURU_SYNTH_DELAY": "1.0"})
-    H = {"X-SpriteKit-Token": "t0k"}
+    H = {"X-SpriteGuru-Token": "t0k"}
     base = f"http://127.0.0.1:{port}/api"
     try:
         with httpx.Client(headers=H, timeout=60) as c:
