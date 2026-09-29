@@ -1,0 +1,18 @@
+jump.side.6:
+  loop: false
+  airborne: [3, 4, 5]
+  apex: 4
+  timing_ms: [120, 80, 90, 120, 90, 140]
+  frames:
+    - line: "Anticipation: deep crouch, arms swung back."
+      pose: {hip_n: 70, knee_n: 118, ankle_n: 30, hip_f: 64, knee_f: 112, ankle_f: 30, shoulder_n: -55, elbow_n: 10, shoulder_f: -50, elbow_f: 12, lean: 34}
+    - line: "Take-off: legs extend, arms swing up, toes leaving the ground."
+      pose: {hip_n: 2, knee_n: 4, ankle_n: -40, hip_f: -4, knee_f: 6, ankle_f: -42, shoulder_n: 150, elbow_n: 10, shoulder_f: 140, elbow_f: 12, lean: 6}
+    - line: "Rising: knees tucked, arms high."
+      pose: {hip_n: 60, knee_n: 96, ankle_n: -10, hip_f: 54, knee_f: 92, ankle_f: -12, shoulder_n: 160, elbow_n: 14, shoulder_f: 152, elbow_f: 16, lean: 8, air: 0.22}
+    - line: "Apex: top of the jump, legs slightly tucked."
+      pose: {hip_n: 34, knee_n: 54, ankle_n: -8, hip_f: 28, knee_f: 50, ankle_f: -10, shoulder_n: 110, elbow_n: 20, shoulder_f: 96, elbow_f: 22, lean: 4, air: 0.3}
+    - line: "Falling: legs reach down, arms out for balance."
+      pose: {hip_n: 12, knee_n: 16, ankle_n: 10, hip_f: 4, knee_f: 12, ankle_f: 8, shoulder_n: 84, elbow_n: 14, shoulder_f: 100, elbow_f: 12, lean: 2, air: 0.12}
+    - line: "Landing: feet on the ground, knees bent to absorb the impact."
+      pose: {hip_n: 48, knee_n: 84, ankle_n: 22, hip_f: 42, knee_f: 80, ankle_f: 22, shoulder_n: 40, elbow_n: 30, shoulder_f: 30, elbow_f: 30, lean: 22}

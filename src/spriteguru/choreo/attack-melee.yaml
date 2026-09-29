@@ -1,0 +1,19 @@
+attack.melee.side.6:
+  loop: false
+  props: [weapon]
+  impact: 4
+  returns_to_start: true
+  timing_ms: [120, 120, 80, 60, 100, 120]
+  frames:
+    - line: "Ready: combat stance, sword in the right hand held in front."
+      pose: {hip_n: 22, knee_n: 16, ankle_n: 6, hip_f: -20, knee_f: 14, ankle_f: -6, shoulder_n: 40, elbow_n: 50, shoulder_f: 24, elbow_f: 64, lean: 4, weapon: 40}
+    - line: "Wind-up: sword pulled back over the right shoulder, torso twisted away."
+      pose: {hip_n: 20, knee_n: 20, ankle_n: 6, hip_f: -24, knee_f: 16, ankle_f: -6, shoulder_n: 168, elbow_n: 70, shoulder_f: 30, elbow_f: 60, lean: -8, weapon: -110}
+    - line: "Swing: torso turning forward, sword travelling in a wide arc."
+      pose: {hip_n: 28, knee_n: 24, ankle_n: 6, hip_f: -26, knee_f: 10, ankle_f: -8, shoulder_n: 130, elbow_n: 16, shoulder_f: 10, elbow_f: 50, lean: 10, weapon: 18}
+    - line: "Impact: right arm fully extended, sword horizontal at full reach."
+      pose: {hip_n: 36, knee_n: 30, ankle_n: 6, hip_f: -30, knee_f: 4, ankle_f: -10, shoulder_n: 90, elbow_n: 0, shoulder_f: -10, elbow_f: 40, lean: 16, weapon: 90}
+    - line: "Follow-through: sword continues low across the body."
+      pose: {hip_n: 32, knee_n: 30, ankle_n: 6, hip_f: -26, knee_f: 8, ankle_f: -8, shoulder_n: 30, elbow_n: 10, shoulder_f: -16, elbow_f: 40, lean: 20, weapon: 150}
+    - line: "Recovery: returning to the ready stance."
+      pose: {hip_n: 22, knee_n: 16, ankle_n: 6, hip_f: -20, knee_f: 14, ankle_f: -6, shoulder_n: 40, elbow_n: 50, shoulder_f: 24, elbow_f: 64, lean: 4, weapon: 40}

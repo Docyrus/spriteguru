@@ -1,0 +1,16 @@
+Redraw image 1 as a finished 2D game sprite sheet of the {{ kind }} in image 2.
+
+LAYOUT (keep exactly): Keep image 1's canvas size, its flat {{ key_name }} background ({{ key_hex }}) and the position, size and tilt of every grey {{ kind }}. There are {{ n }} grey copies of the {{ kind }} in {{ cols }} columns and {{ rows }} rows to the right of the reference strip. Replace each grey copy with the {{ kind }} in full colour, matching that copy's position, size and tilt exactly. Frames read left to right, top row first. The {{ kind }} drawn in the left strip is the finished reference: copy it exactly and leave the strip unchanged.
+
+{{ kind | upper }} (identical in every frame): {{ character }}. Same design, proportions, colours and details in all {{ n }} frames; only the moving parts, lights, flashes and smoke described below change. Every frame shows the whole {{ kind }} at the same scale{% if grounded %}, resting on one shared ground line{% endif %}.
+
+VIEW: {{ view_block }}
+
+MOTION: {{ action_title }}.
+{{ frame_lines }}
+
+STYLE: {{ style_block }}
+
+BACKGROUND: one flat, uniform {{ key_name }} ({{ key_hex }}) everywhere around the {{ kind }}: clean empty space, no floor, no cast shadows, no scenery. {{ key_name | capitalize }} is used only for the background, never on the {{ kind }}; smoke and flashes may overlap it but stay inside each frame's area.
+
+RESULT: exactly {{ n }} copies of the {{ kind }} on the flat background, each fully inside its own area with empty space around it.

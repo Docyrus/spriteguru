@@ -1,0 +1,82 @@
+# Visual effects (projectiles, impacts, explosions, auras). Mode "effect": each frame is a list of
+# shapes in units of the effect size, origin at the effect's centre (y up). The guide draws them as
+# soft grey shapes; the lines describe the look the model paints over them.
+effect.projectile.side.6:
+  loop: true
+  frames:
+    - line: "A ball of energy flying to the right, bright core, a short streaming tail behind it."
+      shapes: [{type: orb, x: 0.1, y: 0.0, r: 0.3}, {type: tail, x0: -0.5, x1: 0.1, y: 0.0, w: 0.34}]
+    - line: "The ball pulses a little larger, the tail flickering longer."
+      shapes: [{type: orb, x: 0.1, y: 0.0, r: 0.33}, {type: tail, x0: -0.6, x1: 0.1, y: 0.02, w: 0.38}]
+    - line: "The core flares brightest, wisps peeling off the tail."
+      shapes: [{type: orb, x: 0.1, y: 0.0, r: 0.35}, {type: tail, x0: -0.65, x1: 0.1, y: 0.0, w: 0.4}]
+    - line: "The ball contracts slightly, the tail shortening."
+      shapes: [{type: orb, x: 0.1, y: 0.0, r: 0.31}, {type: tail, x0: -0.55, x1: 0.1, y: -0.02, w: 0.35}]
+    - line: "The ball at its smallest, the tail short and tight."
+      shapes: [{type: orb, x: 0.1, y: 0.0, r: 0.29}, {type: tail, x0: -0.45, x1: 0.1, y: 0.0, w: 0.32}]
+    - line: "The ball swelling again, the tail lengthening."
+      shapes: [{type: orb, x: 0.1, y: 0.0, r: 0.31}, {type: tail, x0: -0.52, x1: 0.1, y: 0.01, w: 0.34}]
+effect.charge.side.6:
+  loop: false
+  timing_ms: [80, 80, 90, 100, 110, 140]
+  frames:
+    - line: "Charging: a few specks of energy gathering toward a point."
+      shapes: [{type: sparks, x: 0.0, y: 0.0, r: 0.45, n: 8, size: 0.03}]
+    - line: "The specks converge and a tiny glowing core appears."
+      shapes: [{type: orb, x: 0.0, y: 0.0, r: 0.08}, {type: sparks, x: 0.0, y: 0.0, r: 0.32, n: 8, size: 0.03}]
+    - line: "The core grows, energy spiralling into it."
+      shapes: [{type: orb, x: 0.0, y: 0.0, r: 0.15}, {type: sparks, x: 0.0, y: 0.0, r: 0.25, n: 6, size: 0.03}]
+    - line: "The core swells, crackling."
+      shapes: [{type: orb, x: 0.0, y: 0.0, r: 0.24}]
+    - line: "A full, bright ball of energy, shimmering."
+      shapes: [{type: orb, x: 0.0, y: 0.0, r: 0.32}]
+    - line: "The ball at full size, a bright flash around it, ready to launch."
+      shapes: [{type: orb, x: 0.0, y: 0.0, r: 0.34}, {type: ring, x: 0.0, y: 0.0, r: 0.42, t: 0.04}]
+effect.impact.side.6:
+  loop: false
+  timing_ms: [50, 60, 70, 90, 110, 130]
+  frames:
+    - line: "Impact: a small intense flash."
+      shapes: [{type: orb, x: 0.0, y: 0.0, r: 0.15}]
+    - line: "The flash bursts outward into a star of energy."
+      shapes: [{type: burst, x: 0.0, y: 0.0, r: 0.35, n: 8}]
+    - line: "A ring of energy expanding, sparks flying outward."
+      shapes: [{type: ring, x: 0.0, y: 0.0, r: 0.4, t: 0.08}, {type: sparks, x: 0.0, y: 0.0, r: 0.42, n: 10, size: 0.035}]
+    - line: "The ring wider and thinner, sparks further out."
+      shapes: [{type: ring, x: 0.0, y: 0.0, r: 0.47, t: 0.05}, {type: sparks, x: 0.0, y: 0.0, r: 0.48, n: 10, size: 0.03}]
+    - line: "The ring breaking up into fading wisps."
+      shapes: [{type: ring, x: 0.0, y: 0.0, r: 0.5, t: 0.025}, {type: sparks, x: 0.0, y: 0.0, r: 0.5, n: 6, size: 0.02}]
+    - line: "Last faint sparks dissipating."
+      shapes: [{type: sparks, x: 0.0, y: 0.0, r: 0.5, n: 5, size: 0.015}]
+effect.explosion.side.8:
+  loop: false
+  timing_ms: [50, 60, 70, 80, 90, 110, 130, 160]
+  frames:
+    - line: "Detonation: a small blinding flash."
+      shapes: [{type: orb, x: 0.0, y: -0.1, r: 0.12}]
+    - line: "A ball of fire bursting outward."
+      shapes: [{type: burst, x: 0.0, y: -0.05, r: 0.3, n: 10}]
+    - line: "The fireball at full size, churning, debris flying."
+      shapes: [{type: orb, x: 0.0, y: 0.0, r: 0.4}, {type: sparks, x: 0.0, y: 0.0, r: 0.48, n: 8, size: 0.03}]
+    - line: "The fireball rolling upward, dark smoke forming at its edges."
+      shapes: [{type: orb, x: 0.0, y: 0.08, r: 0.4}]
+    - line: "Flames dying down inside a rising cloud of smoke."
+      shapes: [{type: orb, x: 0.0, y: 0.15, r: 0.38}]
+    - line: "Mostly smoke now, a few embers glowing."
+      shapes: [{type: orb, x: 0.0, y: 0.2, r: 0.34}]
+    - line: "The smoke thinning and drifting upward."
+      shapes: [{type: orb, x: 0.0, y: 0.25, r: 0.28}]
+    - line: "The last wisps of smoke fading."
+      shapes: [{type: orb, x: 0.0, y: 0.3, r: 0.2}]
+effect.aura.side.4:
+  loop: true
+  amplitude: subtle
+  frames:
+    - line: "A flickering aura of energy rising in flame-like tongues."
+      shapes: [{type: ring, x: 0.0, y: 0.0, r: 0.42, t: 0.1}]
+    - line: "The aura's tongues licking higher on the left."
+      shapes: [{type: ring, x: -0.02, y: 0.02, r: 0.43, t: 0.11}]
+    - line: "The aura flaring brightest."
+      shapes: [{type: ring, x: 0.0, y: 0.03, r: 0.44, t: 0.12}]
+    - line: "The aura's tongues licking higher on the right."
+      shapes: [{type: ring, x: 0.02, y: 0.02, r: 0.43, t: 0.11}]

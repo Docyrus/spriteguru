@@ -1,0 +1,53 @@
+# Machines and props (generators, factories, doors, chests, windmills). Mode "rigid"; the body barely
+# moves, the lines carry the moving parts.
+machine.work.side.6:
+  loop: true
+  mode: rigid
+  amplitude: subtle
+  frames:
+    - line: "Working: pistons at the top, gears at their starting angle, indicator light on."
+      pose: {sy: 1.0}
+    - line: "Pistons moving down, gears turned a sixth of a tooth cycle[[, a puff of {exhaust} starting]]."
+      pose: {sy: 0.995, dy: -0.002}
+    - line: "Pistons at the bottom, gears turned further[[, the {exhaust} puff rising]]."
+      pose: {sy: 0.99, dy: -0.004}
+    - line: "Pistons moving up, gears turned further, indicator light blinks off."
+      pose: {sy: 0.995, dy: -0.002}
+    - line: "Pistons near the top, gears turned further[[, the {exhaust} fading]]."
+      pose: {sy: 1.0}
+    - line: "Pistons at the top again, gears completing the cycle, indicator light on."
+      pose: {sy: 1.0}
+machine.activate.side.6:
+  loop: false
+  mode: rigid
+  timing_ms: [140, 110, 100, 100, 110, 160]
+  frames:
+    - line: "Off: every light dark, parts at rest."
+      pose: {sy: 1.0}
+    - line: "Power on: the first indicator light glows."
+      pose: {sy: 1.0}
+    - line: "Parts start to move, more lights coming on, a small shudder."
+      pose: {dx: 0.004}
+    - line: "Running up: moving parts faster, all lights on[[, {exhaust} venting]]."
+      pose: {dx: -0.004}
+    - line: "Full power: bright lights, parts in motion, a glow from inside."
+      pose: {dx: 0.002}
+    - line: "Running steadily at full power."
+      pose: {dx: 0.0}
+machine.break.side.6:
+  loop: false
+  mode: rigid
+  timing_ms: [90, 90, 110, 130, 150, 300]
+  frames:
+    - line: "Overload: lights flicker, a warning glow."
+      pose: {dx: 0.0}
+    - line: "Sparks burst from a seam; the machine shakes."
+      pose: {dx: 0.01, rot: -0.8}
+    - line: "A panel pops off, sparks and smoke pouring out."
+      pose: {dx: -0.01, rot: 0.8}
+    - line: "Parts grind to a halt, smoke thickening, lights dying."
+      pose: {dx: 0.004, rot: 0.3}
+    - line: "Broken and dark, dented, wisps of smoke."
+      pose: {dy: -0.01, sy: 0.98}
+    - line: "Broken and still, a last thread of smoke."
+      pose: {dy: -0.01, sy: 0.98}

@@ -1,0 +1,13 @@
+Prepare this vector game character for animation by restructuring its SVG to the rig convention {{ rig_name }}. Image 1 is a render of the character as it is now.
+
+Return the complete SVG with exactly these top-level groups or elements, in this back-to-front order, each with its id: {{ draw_order }}.
+- Rubberhose limbs {{ rubberhose }}: each is ONE <path> element (id on the path itself) drawn as a single smooth stroke from the shoulder or hip to the wrist or ankle, with fill="none", a stroke colour matching the limb, stroke-width equal to the limb's thickness, stroke-linecap="round". Use the command form "M x,y C x1,y1 x2,y2 x3,y3" (one cubic). Remove the original filled limb shapes.
+- Rigid parts torso, head, hand_f, hand_n, foot_f, foot_n: <g> groups containing the original shapes of that part (head includes face, hair, helmet or accessories; torso includes clothing, scarf and belt). The head must overlap the torso.
+- "_f" is the far side (behind the body), "_n" the near side (in front). If the character has no visible far arm or leg, still draw a plausible one behind the body.
+- Keep the viewBox {{ width }} x {{ height }}, the colours and the overall look; the character faces right, standing, feet on the ground.
+{% if errors %}
+The previous attempt failed validation; fix these problems:
+{{ errors }}
+{% endif %}
+SVG:
+{{ svg }}

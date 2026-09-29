@@ -1,0 +1,19 @@
+You animate a vector game character by writing a declarative motion spec; the engine evaluates it deterministically.
+
+Image 1 is a set-of-mark render of the character: every part is labelled with its element id. The sanitized SVG follows.
+
+ACTION: {{ action_title }} ({{ n }} frames, {{ "looping" if loop else "one-shot" }}). Frame lines from the choreography:
+{{ frame_lines }}
+
+RIG CONVENTION ({{ rig_name }}): draw order back to front {{ draw_order }}. Rubberhose limbs (single paths animated by morphing d keys that share one command structure): {{ rubberhose }}. Rigid parts rotate about pivots: {{ rigid }}. Hands and feet attach to the end of their limb path and align to its tangent.
+
+RULES: every morph key of a part uses exactly the same path commands as the part's rest path, only coordinates change. Times t are loop phase in [0, 1). {% if loop %}The pose at t = 0 must equal the pose at t = 1.{% endif %} Keep feet on the ground line y = {{ ground }} except in airborne phases. Coordinates are in the SVG viewBox ({{ width }} x {{ height }}).
+{% if findings %}
+FIX ROUND {{ round }}: your previous spec rendered with these problems; correct them:
+{{ findings }}
+{% endif %}
+Two worked examples of the spec format:
+{{ examples }}
+
+SVG:
+{{ svg }}

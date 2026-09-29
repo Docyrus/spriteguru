@@ -1,0 +1,21 @@
+# Classic walk: contact, down, passing, up for each leg. "right" is the near side when facing E.
+walk.side.8:
+  loop: true
+  harmonics: [2, 4]
+  frames:
+    - line: "Contact: right heel touches the ground in front, left leg straight behind on its toes, left arm forward."
+      pose: {hip_n: 26, knee_n: 3, ankle_n: 12, hip_f: -22, knee_f: 6, ankle_f: -28, shoulder_n: -24, elbow_n: 12, shoulder_f: 24, elbow_f: 22, lean: 3}
+    - line: "Down: weight sinks onto the bent right leg, body at its lowest, left foot lifting."
+      pose: {hip_n: 16, knee_n: 24, ankle_n: 2, hip_f: -18, knee_f: 42, ankle_f: -22, shoulder_n: -14, elbow_n: 12, shoulder_f: 14, elbow_f: 18, lean: 4}
+    - line: "Passing: left leg swings forward past the straight right leg, knee bent, body rising."
+      pose: {hip_n: 2, knee_n: 4, ankle_n: 0, hip_f: 8, knee_f: 62, ankle_f: -6, shoulder_n: 0, elbow_n: 12, shoulder_f: 0, elbow_f: 14, lean: 3}
+    - line: "Up: body at its highest, pushing off the right toes, left leg reaching forward."
+      pose: {hip_n: -16, knee_n: 4, ankle_n: -22, hip_f: 24, knee_f: 22, ankle_f: 6, shoulder_n: 14, elbow_n: 18, shoulder_f: -14, elbow_f: 12, lean: 3}
+    - line: "Contact: left heel touches the ground in front, right leg straight behind, right arm forward."
+      pose: {hip_f: 26, knee_f: 3, ankle_f: 12, hip_n: -22, knee_n: 6, ankle_n: -28, shoulder_f: -24, elbow_f: 12, shoulder_n: 24, elbow_n: 22, lean: 3}
+    - line: "Down: weight sinks onto the bent left leg, body at its lowest."
+      pose: {hip_f: 16, knee_f: 24, ankle_f: 2, hip_n: -18, knee_n: 42, ankle_n: -22, shoulder_f: -14, elbow_f: 12, shoulder_n: 14, elbow_n: 18, lean: 4}
+    - line: "Passing: right leg swings forward past the straight left leg, body rising."
+      pose: {hip_f: 2, knee_f: 4, ankle_f: 0, hip_n: 8, knee_n: 62, ankle_n: -6, shoulder_f: 0, elbow_f: 12, shoulder_n: 0, elbow_n: 14, lean: 3}
+    - line: "Up: body at its highest, pushing off the left toes, right leg reaching forward."
+      pose: {hip_f: -16, knee_f: 4, ankle_f: -22, hip_n: 24, knee_n: 22, ankle_n: 6, shoulder_f: 14, elbow_f: 18, shoulder_n: -14, elbow_n: 12, lean: 3}

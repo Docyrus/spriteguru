@@ -1,0 +1,9 @@
+{% if from_image %}Using the effect in image 1 as the exact design reference, create{% else %}Create{% endif %} a design sheet for a 2D game visual effect: the effect drawn once, large and centred, at its most intense moment.
+
+EFFECT: {{ character }}.
+
+STYLE: {{ style_block }} {% if additive %}Glowing light: bright core, soft luminous falloff, no dark outline.{% endif %}
+
+BACKGROUND: one flat, uniform {{ bg_name }} ({{ bg_hex }}) everywhere around the effect: clean empty space, nothing else in the picture.
+
+RESULT: exactly one instance of the effect in the middle of the canvas with empty space around it.

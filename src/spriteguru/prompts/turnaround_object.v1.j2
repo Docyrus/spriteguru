@@ -1,0 +1,9 @@
+{% if from_image %}Using the {{ kind }} in image 1 as the exact design reference, create{% else %}Create{% endif %} a turnaround sheet for a 2D game {{ kind }}: the same {{ kind }} drawn four times in one row, left to right: front view, side view facing right, side view facing left, back view.
+
+{{ kind | upper }}: {{ character }}. Identical design, proportions, colours and details in all four views{% if from_image %}, matching image 1{% endif %}; at rest, nothing moving; the whole {{ kind }} visible; all four at the same scale resting on one shared ground line.
+
+STYLE: {{ style_block }}
+
+BACKGROUND: one flat, uniform magenta (#FF00FF) everywhere around the {{ kind }}: clean empty space, no floor, no cast shadows. Magenta is used only for the background, never on the {{ kind }}.
+
+RESULT: exactly four views of the {{ kind }} on the flat background, evenly spaced with empty space between them.

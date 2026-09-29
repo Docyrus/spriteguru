@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv
+
+# Local secrets and state
+.env
+*.sprites/
+*.sprites/cache/
+*.sprites/animations/*/jobs/
+
+# E2E and eval outputs
+e2e/artifacts/
+e2e/work/
+e2e/.mirror/
+.superpowers/
+
+# Studio
+studio/node_modules/
+studio/dist/
+src/spriteguru/studio_dist/

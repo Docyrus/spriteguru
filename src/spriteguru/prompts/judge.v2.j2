@@ -1,0 +1,8 @@
+You are checking an AI-generated game animation for production defects.
+Image 1 is the {{ subject }} reference. Image 2 shows the {{ n }} extracted frames of {{ action }}, numbered 1 to {{ n }} in playback order.
+{% if lines %}
+What each frame is meant to show; the movement, tilt, recoil, flashes, smoke and glow described here are intended, not defects:
+{{ lines }}
+{% endif %}
+For each frame, compare it with the reference and report only concrete, visible defects: {% if subject == "character" %}a missing or changed item (weapon, accessory, clothing), extra or missing limbs or fingers, wrong facing direction, a pose that does not fit its position in the animation{% elif subject == "effect" %}a change of colour or style away from the reference, a shape that does not fit its position in the animation, hard edges or a background box where the effect should fade{% else %}a missing, extra or changed part (turret, gun, wheel, gear, panel), wrong facing direction, a change of shape or proportions, motion that does not fit its position in the animation{% endif %}, style or colour drift, stray marks or text.
+Report nothing for frames without defects. Answer only with JSON matching the provided schema, using severity 1 (cosmetic) to 3 (unusable).

@@ -1,0 +1,72 @@
+# Vehicles (tanks, cars, mechs on wheels or treads). Mode "rigid": the whole silhouette moves as one
+# body. dx, dy are fractions of the vehicle's height (dy up), rot is degrees nose-up about the ground
+# contact, sx, sy scale about the ground contact. Lines describe the moving parts the guide cannot.
+vehicle.idle.side.4:
+  loop: true
+  mode: rigid
+  amplitude: subtle
+  frames:
+    - line: "Engine idling: the hull rests on its suspension."
+      pose: {dy: 0.0}
+    - line: "The hull vibrates a tiny amount upward[[; a puff of {exhaust} starts]]."
+      pose: {dy: 0.004}
+    - line: "The hull settles[[; the {exhaust} puff drifts up]]."
+      pose: {dy: 0.0}
+    - line: "The hull vibrates a tiny amount upward again; the puff fades."
+      pose: {dy: 0.004}
+vehicle.move.side.8:
+  loop: true
+  amplitude: subtle  # the hull bobs a few pixels; the wheels carry the motion
+  mode: rigid
+  frames:
+    - line: "Driving forward in place: wheels and tread links at their starting rotation, hull level."
+      pose: {dy: 0.0}
+    - line: "Wheels turned a further eighth of a turn, tread links shifted by one link; hull dips slightly."
+      pose: {dy: -0.004, rot: -0.3}
+    - line: "Wheels turned a further eighth; hull at its lowest."
+      pose: {dy: -0.007, rot: 0.0}
+    - line: "Wheels turned a further eighth; hull rising."
+      pose: {dy: -0.004, rot: 0.3}
+    - line: "Wheels turned a further eighth, halfway through the rotation; hull level."
+      pose: {dy: 0.0}
+    - line: "Wheels turned a further eighth; hull dips slightly."
+      pose: {dy: -0.004, rot: -0.3}
+    - line: "Wheels turned a further eighth; hull at its lowest."
+      pose: {dy: -0.007, rot: 0.0}
+    - line: "Wheels turned a further eighth, about to complete the rotation; hull rising."
+      pose: {dy: -0.004, rot: 0.3}
+vehicle.fire.side.6:
+  loop: false
+  mode: rigid
+  impact: 2
+  timing_ms: [120, 60, 70, 90, 110, 140]
+  frames:
+    - line: "Ready: at rest, the main gun level."
+      pose: {dx: 0.0}
+    - line: "Firing: a bright muzzle flash bursts from the gun; the whole vehicle starts to rock back."
+      pose: {dx: -0.03, rot: 1.0}
+    - line: "Recoil: the vehicle at its furthest back, nose tilted up, a cloud of smoke at the muzzle."
+      pose: {dx: -0.05, rot: 1.8}
+    - line: "Returning: rolling forward again, the smoke cloud expanding and drifting."
+      pose: {dx: -0.03, rot: 0.8}
+    - line: "Settling: almost back in place, the smoke thinning."
+      pose: {dx: -0.01, rot: 0.2}
+    - line: "At rest again, a last wisp of smoke at the muzzle."
+      pose: {dx: 0.0}
+vehicle.destroyed.side.6:
+  loop: false
+  mode: rigid
+  timing_ms: [80, 90, 110, 140, 160, 300]
+  frames:
+    - line: "Hit: a bright impact flash on the hull."
+      pose: {dx: 0.0}
+    - line: "The vehicle jolts sideways from the blast, sparks flying."
+      pose: {dx: 0.02, rot: -2.0}
+    - line: "Fire breaks out on the hull, dark smoke rising."
+      pose: {dx: 0.01, rot: 2.5}
+    - line: "The vehicle slumps on one side, flames and thick smoke."
+      pose: {dx: 0.0, rot: 3.0, dy: -0.02, sy: 0.97}
+    - line: "A burning wreck, dented and scorched, smoke billowing."
+      pose: {rot: 3.0, dy: -0.03, sy: 0.95}
+    - line: "The burnt-out wreck, dark and smoking, small flames."
+      pose: {rot: 3.0, dy: -0.03, sy: 0.95}

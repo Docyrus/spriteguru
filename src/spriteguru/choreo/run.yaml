@@ -1,0 +1,17 @@
+run.side.6:
+  loop: true
+  harmonics: [2, 4]
+  airborne: [3, 6]
+  frames:
+    - line: "Contact: right foot lands under the hips, torso leaning forward, elbows bent, left arm forward."
+      pose: {hip_n: 16, knee_n: 18, ankle_n: 4, hip_f: -34, knee_f: 58, ankle_f: -20, shoulder_n: -38, elbow_n: 80, shoulder_f: 40, elbow_f: 84, lean: 12}
+    - line: "Down: right knee absorbs the landing, body lowest, left knee driving forward."
+      pose: {hip_n: 4, knee_n: 40, ankle_n: 14, hip_f: 22, knee_f: 96, ankle_f: -10, shoulder_n: -18, elbow_n: 82, shoulder_f: 20, elbow_f: 84, lean: 14}
+    - line: "Flight: both feet off the ground, legs split, left knee high, body highest."
+      pose: {hip_n: -40, knee_n: 52, ankle_n: -24, hip_f: 52, knee_f: 72, ankle_f: 2, shoulder_n: 38, elbow_n: 84, shoulder_f: -40, elbow_f: 80, lean: 12, air: 0.06}
+    - line: "Contact: left foot lands under the hips, right arm forward."
+      pose: {hip_f: 16, knee_f: 18, ankle_f: 4, hip_n: -34, knee_n: 58, ankle_n: -20, shoulder_f: -38, elbow_f: 80, shoulder_n: 40, elbow_n: 84, lean: 12}
+    - line: "Down: left knee absorbs the landing, body lowest, right knee driving forward."
+      pose: {hip_f: 4, knee_f: 40, ankle_f: 14, hip_n: 22, knee_n: 96, ankle_n: -10, shoulder_f: -18, elbow_f: 82, shoulder_n: 20, elbow_n: 84, lean: 14}
+    - line: "Flight: both feet off the ground, right knee high."
+      pose: {hip_f: -40, knee_f: 52, ankle_f: -24, hip_n: 52, knee_n: 72, ankle_n: 2, shoulder_f: 38, elbow_f: 84, shoulder_n: -40, elbow_n: 80, lean: 12, air: 0.06}

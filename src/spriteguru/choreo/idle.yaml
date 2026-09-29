@@ -1,0 +1,13 @@
+idle.side.4:
+  loop: true
+  amplitude: subtle
+  harmonics: [1]
+  frames:
+    - line: "Relaxed neutral stance, weight centred."
+      pose: {hip_n: 6, knee_n: 4, hip_f: -6, knee_f: 4, shoulder_n: -6, elbow_n: 14, shoulder_f: 8, elbow_f: 16, lean: 1, breath: 0.0}
+    - line: "Breathing in: chest and shoulders rise very slightly."
+      pose: {hip_n: 6, knee_n: 4, hip_f: -6, knee_f: 4, shoulder_n: -6, elbow_n: 13, shoulder_f: 8, elbow_f: 15, lean: 1, breath: 0.006}
+    - line: "Top of the breath: shoulders at their highest."
+      pose: {hip_n: 6, knee_n: 4, hip_f: -6, knee_f: 4, shoulder_n: -5, elbow_n: 12, shoulder_f: 9, elbow_f: 14, lean: 0.5, breath: 0.01}
+    - line: "Breathing out: shoulders settle back to neutral."
+      pose: {hip_n: 6, knee_n: 4, hip_f: -6, knee_f: 4, shoulder_n: -6, elbow_n: 13, shoulder_f: 8, elbow_f: 15, lean: 1, breath: 0.005}

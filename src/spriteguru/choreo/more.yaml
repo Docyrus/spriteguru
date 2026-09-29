@@ -1,0 +1,95 @@
+hurt.side.3:
+  loop: false
+  timing_ms: [90, 140, 160]
+  frames:
+    - line: "Impact: the body recoils backward, head snapping back, arms flung out."
+      pose: {hip_n: 10, knee_n: 12, hip_f: -14, knee_f: 10, shoulder_n: 50, elbow_n: 30, shoulder_f: -30, elbow_f: 20, lean: -20, head: -15}
+    - line: "Stagger: knees bent, torso still leaning back."
+      pose: {hip_n: 24, knee_n: 36, hip_f: -8, knee_f: 30, shoulder_n: 24, elbow_n: 40, shoulder_f: -14, elbow_f: 30, lean: -12, head: -6}
+    - line: "Recover: straightening up toward a neutral stance."
+      pose: {hip_n: 10, knee_n: 10, hip_f: -8, knee_f: 8, shoulder_n: 0, elbow_n: 20, shoulder_f: 6, elbow_f: 20, lean: -3}
+death.side.6:
+  loop: false
+  timing_ms: [100, 120, 140, 140, 160, 300]
+  frames:
+    - line: "Hit: the body recoils, head thrown back."
+      pose: {hip_n: 10, knee_n: 12, hip_f: -14, knee_f: 10, shoulder_n: 40, elbow_n: 30, shoulder_f: -30, elbow_f: 20, lean: -18, head: -14}
+    - line: "Knees buckle, arms dropping."
+      pose: {hip_n: 40, knee_n: 70, hip_f: 30, knee_f: 66, shoulder_n: 10, elbow_n: 20, shoulder_f: 0, elbow_f: 20, lean: 8, head: 10}
+    - line: "Kneeling, torso slumping forward."
+      pose: {hip_n: 90, knee_n: 150, ankle_n: 40, hip_f: 84, knee_f: 146, ankle_f: 40, shoulder_n: 0, elbow_n: 10, shoulder_f: -6, elbow_f: 10, lean: 30, head: 20}
+    - line: "Toppling backward, legs folding."
+      pose: {hip_n: 110, knee_n: 120, hip_f: 100, knee_f: 110, shoulder_n: 60, elbow_n: 20, shoulder_f: 40, elbow_f: 20, lean: -50, head: 10}
+    - line: "Hitting the ground on the back."
+      pose: {hip_n: 100, knee_n: 30, hip_f: 94, knee_f: 26, shoulder_n: 170, elbow_n: 10, shoulder_f: 150, elbow_f: 10, lean: -86, head: 4}
+    - line: "Lying still on the back."
+      pose: {hip_n: 92, knee_n: 8, hip_f: 88, knee_f: 6, shoulder_n: 176, elbow_n: 4, shoulder_f: 160, elbow_f: 4, lean: -90, head: 0}
+cast.side.6:
+  loop: false
+  timing_ms: [120, 120, 120, 80, 160, 120]
+  frames:
+    - line: "Ready: relaxed stance, hands low."
+      pose: {hip_n: 12, knee_n: 8, hip_f: -12, knee_f: 8, shoulder_n: 10, elbow_n: 30, shoulder_f: 14, elbow_f: 34, lean: 2}
+    - line: "Gather: both hands drawn together at the chest."
+      pose: {hip_n: 14, knee_n: 12, hip_f: -12, knee_f: 10, shoulder_n: 40, elbow_n: 110, shoulder_f: 44, elbow_f: 106, lean: -2}
+    - line: "Raise: both arms lifted above the head, palms up."
+      pose: {hip_n: 14, knee_n: 8, hip_f: -12, knee_f: 8, shoulder_n: 165, elbow_n: 20, shoulder_f: 160, elbow_f: 24, lean: -6, head: -8}
+    - line: "Release: both arms thrust forward at full reach."
+      pose: {hip_n: 26, knee_n: 20, hip_f: -22, knee_f: 6, shoulder_n: 92, elbow_n: 0, shoulder_f: 86, elbow_f: 2, lean: 12}
+    - line: "Hold: arms still extended, body braced."
+      pose: {hip_n: 26, knee_n: 22, hip_f: -22, knee_f: 6, shoulder_n: 88, elbow_n: 4, shoulder_f: 84, elbow_f: 6, lean: 10}
+    - line: "Recover: arms lowering back to the ready stance."
+      pose: {hip_n: 14, knee_n: 8, hip_f: -12, knee_f: 8, shoulder_n: 20, elbow_n: 30, shoulder_f: 22, elbow_f: 34, lean: 2}
+crouch.side.4:
+  loop: false
+  timing_ms: [100, 100, 100, 200]
+  frames:
+    - line: "Standing upright, relaxed."
+      pose: {hip_n: 6, knee_n: 4, hip_f: -6, knee_f: 4, shoulder_n: -4, elbow_n: 14, shoulder_f: 6, elbow_f: 16}
+    - line: "Knees start to bend, torso leaning forward slightly."
+      pose: {hip_n: 36, knee_n: 60, ankle_n: 16, hip_f: 30, knee_f: 56, ankle_f: 16, shoulder_n: 10, elbow_n: 20, shoulder_f: 14, elbow_f: 20, lean: 14}
+    - line: "Deep bend, arms forward for balance."
+      pose: {hip_n: 70, knee_n: 116, ankle_n: 30, hip_f: 64, knee_f: 110, ankle_f: 30, shoulder_n: 30, elbow_n: 30, shoulder_f: 34, elbow_f: 30, lean: 26}
+    - line: "Full crouch, held low and compact."
+      pose: {hip_n: 84, knee_n: 140, ankle_n: 36, hip_f: 78, knee_f: 134, ankle_f: 36, shoulder_n: 30, elbow_n: 40, shoulder_f: 34, elbow_f: 40, lean: 30}
+climb.side.4:
+  loop: true
+  harmonics: [2]
+  frames:
+    - line: "Right hand reaching high, left knee raised."
+      pose: {hip_n: -6, knee_n: 10, hip_f: 60, knee_f: 90, shoulder_n: 170, elbow_n: 20, shoulder_f: 120, elbow_f: 60, lean: 6}
+    - line: "Pulling up, both hands at head height."
+      pose: {hip_n: 20, knee_n: 40, hip_f: 30, knee_f: 50, shoulder_n: 140, elbow_n: 50, shoulder_f: 140, elbow_f: 50, lean: 6}
+    - line: "Left hand reaching high, right knee raised."
+      pose: {hip_f: -6, knee_f: 10, hip_n: 60, knee_n: 90, shoulder_f: 170, elbow_f: 20, shoulder_n: 120, elbow_n: 60, lean: 6}
+    - line: "Pulling up again, both hands at head height."
+      pose: {hip_f: 20, knee_f: 40, hip_n: 30, knee_n: 50, shoulder_f: 140, elbow_f: 50, shoulder_n: 140, elbow_n: 50, lean: 6}
+push.side.4:
+  loop: true
+  harmonics: [2]
+  frames:
+    - line: "Leaning into the push, arms straight out in front, right leg forward."
+      pose: {hip_n: 30, knee_n: 30, hip_f: -30, knee_f: 6, ankle_f: -20, shoulder_n: 84, elbow_n: 6, shoulder_f: 80, elbow_f: 8, lean: 30}
+    - line: "Right leg straightening behind, left knee coming forward."
+      pose: {hip_n: -10, knee_n: 8, hip_f: 16, knee_f: 50, shoulder_n: 84, elbow_n: 10, shoulder_f: 80, elbow_f: 12, lean: 32}
+    - line: "Leaning into the push, left leg forward."
+      pose: {hip_f: 30, knee_f: 30, hip_n: -30, knee_n: 6, ankle_n: -20, shoulder_n: 84, elbow_n: 6, shoulder_f: 80, elbow_f: 8, lean: 30}
+    - line: "Left leg straightening behind, right knee coming forward."
+      pose: {hip_f: -10, knee_f: 8, hip_n: 16, knee_n: 50, shoulder_n: 84, elbow_n: 10, shoulder_f: 80, elbow_f: 12, lean: 32}
+fireball.side.6:
+  loop: false
+  timing_ms: [120, 110, 130, 80, 140, 140]
+  impact: 4
+  frames:
+    - line: "Stance: fighting stance, fists up."
+      pose: {hip_n: 24, knee_n: 18, hip_f: -22, knee_f: 14, shoulder_n: 40, elbow_n: 110, shoulder_f: 36, elbow_f: 110, lean: 4}
+    - line: "Gather: sinking low, both hands drawn back to the hip, palms facing each other."
+      pose: {hip_n: 34, knee_n: 44, ankle_n: 10, hip_f: -26, knee_f: 30, shoulder_n: -30, elbow_n: 100, shoulder_f: -26, elbow_f: 104, lean: -4}
+    - line: "Charge: crouched deeper, energy glowing between the cupped hands at the hip."
+      pose: {hip_n: 40, knee_n: 56, ankle_n: 12, hip_f: -28, knee_f: 36, shoulder_n: -36, elbow_n: 96, shoulder_f: -32, elbow_f: 100, lean: -6}
+    - line: "Thrust: stepping in, both arms driving forward, palms together."
+      pose: {hip_n: 36, knee_n: 30, hip_f: -32, knee_f: 8, shoulder_n: 70, elbow_n: 30, shoulder_f: 66, elbow_f: 32, lean: 12}
+    - line: "Release: arms fully extended, palms open toward the target, the energy leaving the hands."
+      pose: {hip_n: 38, knee_n: 30, hip_f: -34, knee_f: 6, shoulder_n: 88, elbow_n: 0, shoulder_f: 84, elbow_f: 2, lean: 16}
+    - line: "Recover: pulling back into the fighting stance."
+      pose: {hip_n: 26, knee_n: 20, hip_f: -22, knee_f: 14, shoulder_n: 40, elbow_n: 100, shoulder_f: 36, elbow_f: 104, lean: 6}

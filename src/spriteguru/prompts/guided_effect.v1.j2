@@ -1,0 +1,14 @@
+Redraw image 1 as a finished 2D game sprite sheet of a visual effect, matching the design in image 2.
+
+LAYOUT (keep exactly): Keep image 1's canvas size and its flat {{ bg_name }} background ({{ bg_hex }}). There are {{ n }} grey shapes in {{ cols }} columns and {{ rows }} rows to the right of the reference strip; each marks where the effect is and how big it is in that frame. Replace each grey shape with the effect, matching its position, size and outline. Frames read left to right, top row first. The effect in the left strip is the finished reference: copy its colours and style exactly and leave the strip unchanged.
+
+EFFECT (consistent in every frame): {{ character }}. Same colours, glow and style in all {{ n }} frames; only its shape and intensity change as described below.
+
+MOTION: {{ action_title }}.
+{{ frame_lines }}
+
+STYLE: {{ style_block }} {% if additive %}Glowing light: bright core, soft luminous falloff, no dark outline.{% endif %}
+
+BACKGROUND: one flat, uniform {{ bg_name }} ({{ bg_hex }}) everywhere around the effect: clean empty space, no scenery, no characters. {% if additive %}Pure black stays pure black wherever the effect does not shine.{% else %}{{ bg_name | capitalize }} is used only for the background, never in the effect.{% endif %}
+
+RESULT: exactly {{ n }} frames of the effect, each fully inside its own area with empty space around it.

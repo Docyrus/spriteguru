@@ -1,0 +1,9 @@
+Redraw image 1 as a finished 2D game sprite frame: replace the grey {{ shape }} in the bottom-left area with the {{ subject }} from the top-left area, in exactly the grey {{ shape }}'s {{ 'extent' if subject == 'effect' else 'pose' }}, size and position.
+
+{{ subject | upper }} (identical to the top-left reference and to image 2): {{ character }}. Same design, proportions and colours{% if subject == 'character' %}, clothing and accessories; full body from head to feet, feet on the same ground line as the other frames{% elif subject != 'effect' %}; the whole {{ subject }}, resting on the same ground line as the other frames{% endif %}.
+
+FIX: {{ fix }}
+
+KEEP: the top-left reference, the top-right frame and the bottom-right frame exactly as they are; they are the neighbouring frames of the animation.
+
+BACKGROUND: one flat, uniform {{ key_name }} ({{ key_hex }}) everywhere around the {{ subject }}: clean empty space, no floor, no cast shadows.{% if key_hex != '#000000' %} {{ key_name | capitalize }} is used only for the background, never on the {{ subject }}.{% endif %}
