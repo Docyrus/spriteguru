@@ -23,5 +23,5 @@ pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="SpriteGuru", console=False,
           icon=os.path.join(brand, "SpriteGuru.ico" if sys.platform == "win32" else "SpriteGuru.icns"))
 coll = COLLECT(exe, a.binaries, a.datas, name="SpriteGuru")
-app = BUNDLE(coll, name="SpriteGuru.app", bundle_identifier="com.spriteplay.studio",
+app = BUNDLE(coll, name="SpriteGuru.app", bundle_identifier="com.spriteguru.studio",
              icon=os.path.join(brand, "SpriteGuru.icns"))

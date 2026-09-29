@@ -3,6 +3,8 @@ name = "spriteguru"
 version = "0.1.0"
 description = "SpriteGuru: local-first sprite studio"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [
     { name = "anilbeyazoglu", email = "anil@beyazoglu.com" }
 ]

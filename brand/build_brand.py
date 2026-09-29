@@ -1,22 +1,8 @@
-"""Build the SpritePlay brand kit (icons and logo files) from one definition of the mark.
-
-    uv run python brand/build_brand.py            # from the repo root; needs Pillow (in the project)
-
-The mark is a 5 x 5 pixel "S" on a rounded black tile; its top-right terminal pixel is lit in
-volt yellow. Geometry is on a 32-unit grid: tile 32 x 32, corner radius 8, the S grid starts at
-unit 6 and each pixel is 4 units, so small sizes stay crisp (16 px: 2 px per S pixel).
-
-Outputs, all in brand/:
-  svg/        logo-mark.svg, logo-mark-on-dark.svg, app-icon-macos.svg
-  png/        mark-<size>.png (full-bleed tile), app-icon-macos-<size>.png (Apple icon grid)
-  SpritePlay.icns   macOS app icon (iconutil)
-  SpritePlay.ico    Windows app icon (16-256)
-The wordmark SVGs (svg/logo-horizontal*.svg) are text converted to outlines from Unbounded and are
-committed as files; they are not rebuilt here.
-"""
+"""Build SpriteGuru's Split Cells brand assets from one geometry definition."""
 
 from __future__ import annotations
 
+import math
 import shutil
 import subprocess
 import tempfile
@@ -26,93 +12,92 @@ from PIL import Image, ImageDraw, ImageFilter
 
 HERE = Path(__file__).resolve().parent
 
-INK = "#000000"
-PAPER = "#FFFFFF"
-VOLT = "#FFD20A"
-
-GRID = 32
-RADIUS = 8
-ORIGIN = 6
-UNIT = 4
-S_PIXELS = [(1, 0), (2, 0), (3, 0), (0, 1), (1, 2), (2, 2), (3, 2), (4, 3), (0, 4), (1, 4), (2, 4), (3, 4)]
-SPARK = (4, 0)
-
-# Apple's macOS icon grid: the icon body is 824 x 824 on a 1024 canvas (100 px margin), corners ~185.
-MAC_CANVAS, MAC_BODY, MAC_RADIUS = 1024, 824, 185
+GRID = 96
+TILE = "#F5F6F8"
+INK = "#15181D"
+BLUE = "#2C6BD0"
+S_PATH = "M24 22h49v16H41v11h31v25H23V58h33V47H24z"
+# The same S as S_PATH, split into its cells (x0, y0, x1, y1): top bar, left column, the thin
+# centre band, right column, bottom bar. Rasters draw these so every edge can land on a pixel.
+S_CELLS = [(24, 22, 73, 38), (24, 38, 41, 47), (41, 47, 56, 49), (56, 49, 72, 58), (23, 58, 72, 74)]
+ACCENT_BOX = (57, 58, 72, 74)
 
 PNG_SIZES = [16, 24, 32, 48, 64, 128, 256, 512, 1024]
 ICO_SIZES = [16, 24, 32, 48, 64, 128, 256]
-ICONSET = [(16, 1), (16, 2), (32, 1), (32, 2), (128, 1), (128, 2), (256, 1), (256, 2), (512, 1), (512, 2)]
+ICONSET = [(16, 1), (16, 2), (32, 1), (32, 2), (128, 1), (128, 2),
+           (256, 1), (256, 2), (512, 1), (512, 2)]
 
 
-def mark_svg(tile: str, glyph: str, spark: str) -> str:
-    rects = "".join(
-        f'<rect x="{ORIGIN + c * UNIT}" y="{ORIGIN + r * UNIT}" width="{UNIT}" height="{UNIT}"/>' for c, r in S_PIXELS
-    )
-    sx, sy = ORIGIN + SPARK[0] * UNIT, ORIGIN + SPARK[1] * UNIT
+def mark_svg() -> str:
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {GRID} {GRID}" role="img" aria-label="SpritePlay">'
-        f'<rect width="{GRID}" height="{GRID}" rx="{RADIUS}" fill="{tile}"/>'
-        f'<g fill="{glyph}">{rects}</g>'
-        f'<rect x="{sx}" y="{sy}" width="{UNIT}" height="{UNIT}" fill="{spark}"/></svg>\n'
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="SpriteGuru">'
+        f'<rect x="3" y="3" width="90" height="90" rx="22" fill="{TILE}"/>'
+        f'<path d="{S_PATH}" fill="{INK}"/>'
+        f'<rect x="57" y="58" width="15" height="16" fill="{BLUE}"/>'
+        '</svg>\n'
     )
 
 
 def mac_icon_svg() -> str:
-    m = (MAC_CANVAS - MAC_BODY) / 2
-    k = MAC_BODY / GRID
-    rects = "".join(
-        f'<rect x="{m + (ORIGIN + c * UNIT) * k:g}" y="{m + (ORIGIN + r * UNIT) * k:g}" width="{UNIT * k:g}" height="{UNIT * k:g}"/>'
-        for c, r in S_PIXELS
-    )
-    sx, sy = m + (ORIGIN + SPARK[0] * UNIT) * k, m + (ORIGIN + SPARK[1] * UNIT) * k
-    e = 4  # half the edge stroke, so the stroke sits inside the body
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {MAC_CANVAS} {MAC_CANVAS}" role="img" aria-label="SpritePlay">'
-        '<defs><filter id="s" x="-10%" y="-10%" width="120%" height="125%">'
-        '<feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.35"/></filter></defs>'
-        f'<rect x="{m:g}" y="{m:g}" width="{MAC_BODY}" height="{MAC_BODY}" rx="{MAC_RADIUS}" fill="{INK}" filter="url(#s)"/>'
-        f'<rect x="{m + e:g}" y="{m + e:g}" width="{MAC_BODY - 2 * e}" height="{MAC_BODY - 2 * e}" rx="{MAC_RADIUS - e}" '
-        f'fill="none" stroke="{PAPER}" stroke-opacity="0.14" stroke-width="{2 * e}"/>'
-        f'<g fill="{PAPER}">{rects}</g>'
-        f'<rect x="{sx:g}" y="{sy:g}" width="{UNIT * k:g}" height="{UNIT * k:g}" fill="{VOLT}"/></svg>\n'
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="SpriteGuru">'
+        '<defs><filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">'
+        '<feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.28"/>'
+        '</filter></defs>'
+        f'<g transform="translate(100 100) scale({824 / 96:g})" filter="url(#shadow)">'
+        f'<rect x="3" y="3" width="90" height="90" rx="22" fill="{TILE}"/>'
+        f'<path d="{S_PATH}" fill="{INK}"/>'
+        f'<rect x="57" y="58" width="15" height="16" fill="{BLUE}"/>'
+        '</g></svg>\n'
     )
 
 
-def render(
-    size: int, *, margin: float = 0.0, radius: float = RADIUS / GRID, tile=INK, glyph=PAPER, spark=VOLT, dock: bool = False
-) -> Image.Image:
-    """Draw the mark at `size` px. `margin` and `radius` are fractions of the canvas / body.
-    `dock` adds the macOS treatment: a soft shadow in the margin and a faint light edge, so the
-    black tile separates from a dark Dock."""
-    ss = 8 if size < 256 else 2
-    big = size * ss
-    img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
-    body = big * (1 - 2 * margin)
-    off = big * margin
-    box = [off, off, off + body - 1, off + body - 1]
+def render(size: int, *, dock: bool = False) -> Image.Image:
+    """Draw the mark at `size` px with the S and the blue cell snapped to whole pixels, so 16 and
+    32 px icons stay crisp. Below ~48 px the 2-unit centre band would round away and split the S in
+    two, so every cell keeps at least one pixel. `dock` adds the macOS icon grid margin and shadow."""
+    supersample = 8 if size < 256 else 2
+    canvas = size * supersample
+    margin = size * 100 / 1024 if dock else 0.0
+    scale = (size - 2 * margin) / GRID
+
+    def px(unit: float) -> int:
+        return math.floor(margin + unit * scale + 0.5)
+
+    def snap(units: set[int]) -> dict[int, int]:
+        # Round each edge to a pixel, but never let a gap of 2+ units (a cell) round to nothing;
+        # 1-unit offsets (the bottom bar's overhang, the blue cell's inset) may merge.
+        out: dict[int, int] = {}
+        for prev, unit in zip([None, *sorted(units)], sorted(units)):
+            out[unit] = px(unit) if prev is None else max(px(unit), out[prev] + (unit - prev >= 2))
+        return out
+
+    cells = S_CELLS + [ACCENT_BOX]
+    xs = snap({x for cell in cells for x in cell[0::2]})
+    ys = snap({y for cell in cells for y in cell[1::2]})
+
+    def box(x0: int, y0: int, x1: int, y1: int) -> list[int]:
+        return [x0 * supersample, y0 * supersample, x1 * supersample - 1, y1 * supersample - 1]
+
+    inset = px(3)
+    tile = box(inset, inset, size - inset, size - inset)
+    radius = 22 * scale * supersample
+    image = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
     if dock and size >= 32:
-        shadow = Image.new("RGBA", (big, big), (0, 0, 0, 0))
-        dy = body * 0.012
-        ImageDraw.Draw(shadow).rounded_rectangle([box[0], box[1] + dy, box[2], box[3] + dy], radius=body * radius, fill=(0, 0, 0, 90))
-        img = Image.alpha_composite(img, shadow.filter(ImageFilter.GaussianBlur(body * 0.017)))
-    d = ImageDraw.Draw(img)
-    d.rounded_rectangle(box, radius=body * radius, fill=tile)
-    if dock:
-        w = max(1, round(body * 0.0097))
-        edge = Image.new("RGBA", (big, big), (0, 0, 0, 0))
-        ImageDraw.Draw(edge).rounded_rectangle(box, radius=body * radius, outline=(255, 255, 255, 36), width=w)
-        img = Image.alpha_composite(img, edge)
-        d = ImageDraw.Draw(img)
-    k = body / GRID
-    for c, r in S_PIXELS + [SPARK]:
-        x0, y0 = off + (ORIGIN + c * UNIT) * k, off + (ORIGIN + r * UNIT) * k
-        d.rectangle([round(x0), round(y0), round(x0 + UNIT * k) - 1, round(y0 + UNIT * k) - 1], fill=spark if (c, r) == SPARK else glyph)
-    return img.resize((size, size), Image.LANCZOS)
+        shadow = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
+        drop = round(size * 0.01) * supersample
+        ImageDraw.Draw(shadow).rounded_rectangle([tile[0], tile[1] + drop, tile[2], tile[3] + drop],
+                                                 radius=radius, fill=(0, 0, 0, 76))
+        image = Image.alpha_composite(image, shadow.filter(ImageFilter.GaussianBlur(canvas * 0.014)))
 
-
-def render_mac(size: int) -> Image.Image:
-    return render(size, margin=(MAC_CANVAS - MAC_BODY) / 2 / MAC_CANVAS, radius=MAC_RADIUS / MAC_BODY, dock=True)
+    draw = ImageDraw.Draw(image)
+    draw.rounded_rectangle(tile, radius=radius, fill=TILE)
+    for x0, y0, x1, y1 in S_CELLS:
+        draw.rectangle(box(xs[x0], ys[y0], xs[x1], ys[y1]), fill=INK)
+    x0, y0, x1, y1 = ACCENT_BOX
+    draw.rectangle(box(xs[x0], ys[y0], xs[x1], ys[y1]), fill=BLUE)
+    # BOX keeps whole-pixel cells exact; LANCZOS would ring and grey them at small sizes.
+    return image.resize((size, size), Image.Resampling.BOX)
 
 
 def main() -> None:
@@ -120,28 +105,30 @@ def main() -> None:
     svg_dir.mkdir(exist_ok=True)
     png_dir.mkdir(exist_ok=True)
 
-    (svg_dir / "logo-mark.svg").write_text(mark_svg(INK, PAPER, VOLT))
-    (svg_dir / "logo-mark-on-dark.svg").write_text(mark_svg(PAPER, INK, VOLT))
+    master = mark_svg()
+    (svg_dir / "logo-mark.svg").write_text(master)
+    (svg_dir / "logo-mark-on-dark.svg").write_text(master)
     (svg_dir / "app-icon-macos.svg").write_text(mac_icon_svg())
 
-    for s in PNG_SIZES:
-        render(s).save(png_dir / f"mark-{s}.png")
-        render(s, tile=PAPER, glyph=INK).save(png_dir / f"mark-on-dark-{s}.png")
-        render_mac(s).save(png_dir / f"app-icon-macos-{s}.png")
+    for size in PNG_SIZES:
+        render(size).save(png_dir / f"mark-{size}.png")
+        render(size).save(png_dir / f"mark-on-dark-{size}.png")
+        render(size, dock=True).save(png_dir / f"app-icon-macos-{size}.png")
 
-    base = render(256)
-    base.save(HERE / "SpritePlay.ico", sizes=[(s, s) for s in ICO_SIZES], bitmap_format="png")
+    icons = [render(size) for size in ICO_SIZES]
+    icons[-1].save(HERE / "SpriteGuru.ico", sizes=[(s, s) for s in ICO_SIZES], bitmap_format="png",
+                   append_images=icons[:-1])
 
     if shutil.which("iconutil"):
-        with tempfile.TemporaryDirectory() as tmp:
-            iconset = Path(tmp) / "SpritePlay.iconset"
+        with tempfile.TemporaryDirectory() as temp:
+            iconset = Path(temp) / "SpriteGuru.iconset"
             iconset.mkdir()
-            for pt, scale in ICONSET:
-                name = f"icon_{pt}x{pt}{'@2x' if scale == 2 else ''}.png"
-                render_mac(pt * scale).save(iconset / name)
-            subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(HERE / "SpritePlay.icns")], check=True)
+            for points, scale in ICONSET:
+                suffix = "@2x" if scale == 2 else ""
+                render(points * scale, dock=True).save(iconset / f"icon_{points}x{points}{suffix}.png")
+            subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(HERE / "SpriteGuru.icns")], check=True)
     else:
-        print("iconutil not found (macOS only): SpritePlay.icns not rebuilt")
+        print("iconutil not found (macOS only): SpriteGuru.icns not rebuilt")
     print(f"brand kit written to {HERE}")
 
 

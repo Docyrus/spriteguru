@@ -1,6 +1,7 @@
-"""The brand kit in the app (docs/failure-modes.md B1–B7): the studio header shows the brand mark,
-with the dark-theme variant, crisp and with its clear space; the favicon is the mark; and the
-launcher finds the brand icon for the window and the Dock, or runs without one."""
+"""The brand kit in the app (docs/failure-modes.md B1–B7): the Split Cells master geometry and crisp
+16 and 32 px rasters; the studio header shows the brand mark, with the dark-theme variant, crisp and
+with its clear space; the favicon is the mark; and the launcher finds the brand icon for the window
+and the Dock, or runs without one."""
 
 from __future__ import annotations
 
@@ -9,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+from urllib.parse import quote
 
 import numpy as np
 from PIL import Image
@@ -17,6 +19,7 @@ from conftest import ROOT, free_port
 from test_13_projects import _start, _stop
 
 BRAND = ROOT / "brand"
+SPLIT_CELLS = "M24 22h49v16H41v11h31v25H23V58h33V47H24z"
 PAGE_ASSET = """async (url) => { const r = await fetch(url); return [r.headers.get('content-type') || '', await r.text()]; }"""
 
 
@@ -26,35 +29,50 @@ def _same_drawing(svg_text: str, name: str) -> bool:
     return canon(svg_text) == canon((BRAND / "svg" / name).read_text())
 
 
-def _pixel_diff(png: bytes, name: str) -> int:
-    """Largest channel difference from an exact 32 px raster of the brand SVG's own rectangles, over
-    the tile outside its rounded corners: 0 when the mark is drawn at 32 px on whole pixels (every S
-    pixel exactly 4 px), large when it is blurred, shifted, scaled or recoloured. (The kit's PNGs are
-    downsampled with soft edges, so they are no reference for crispness.)"""
-    ns = {"s": "http://www.w3.org/2000/svg"}
-    root = ET.parse(BRAND / "svg" / name).getroot()
-    rgb = lambda h: [int(h[i:i + 2], 16) for i in (1, 3, 5)]  # noqa: E731
-    want = np.zeros((32, 32, 3), dtype=int)
-    tile = root.find("s:rect", ns)
-    want[:, :] = rgb(tile.get("fill"))
-    for parent in [root, *root.findall("s:g", ns)]:
-        for r in parent.findall("s:rect", ns):
-            if r is not tile:
-                x, y, w, h = (int(float(r.get(k))) for k in ("x", "y", "width", "height"))
-                want[y:y + h, x:x + w] = rgb(r.get("fill") or parent.get("fill"))
+def _reference(browser, name: str) -> np.ndarray:
+    """The brand SVG drawn by the same browser at 32 px on whole pixels, with its alpha."""
+    page = browser.new_page(viewport={"width": 32, "height": 32})
+    svg = (BRAND / "svg" / name).read_text()
+    page.set_content('<body style="margin:0;background:transparent">'
+                     f'<img src="data:image/svg+xml,{quote(svg)}" width="32" height="32" style="display:block"></body>')
+    page.wait_for_function("() => document.images[0].complete && document.images[0].naturalWidth > 0")
+    png = page.screenshot(omit_background=True)
+    page.close()
+    return np.asarray(Image.open(io.BytesIO(png)).convert("RGBA"), dtype=int)
+
+
+def _pixel_diff(png: bytes, ref: np.ndarray) -> int:
+    """Largest channel difference from the reference raster over its opaque pixels (the rounded
+    corners blend with the header behind them): 0 when the header draws the mark at 32 px on whole
+    pixels, large when it is blurred, shifted, scaled or recoloured."""
     got = np.asarray(Image.open(io.BytesIO(png)).convert("RGB"), dtype=int)
-    if got.shape != want.shape:
+    if got.shape != (32, 32, 3):
         return 255
-    inner = np.ones((32, 32), dtype=bool)
-    for ys in (slice(0, 8), slice(24, 32)):
-        for xs in (slice(0, 8), slice(24, 32)):
-            inner[ys, xs] = False  # the rounded corners blend with the header behind them
-    return int(np.abs(got - want)[inner].max())
+    solid = ref[..., 3] == 255
+    return int(np.abs(got - ref[..., :3])[solid].max())
 
 
 def test_brand(rec, work, run_dir):
     S = "brand"
     from playwright.sync_api import expect, sync_playwright
+
+    mark_svg = (BRAND / "svg" / "logo-mark.svg").read_text()
+    assert 'viewBox="0 0 96 96"' in mark_svg
+    assert '<rect x="3" y="3" width="90" height="90" rx="22" fill="#F5F6F8"' in mark_svg
+    assert f'd="{SPLIT_CELLS}" fill="#15181D"' in mark_svg
+    assert '<rect x="57" y="58" width="15" height="16" fill="#2C6BD0"' in mark_svg
+    assert "SpriteGuru" in mark_svg
+    assert "FFD20A" not in mark_svg
+    for size in (16, 32):
+        image = Image.open(BRAND / "png" / f"mark-{size}.png").convert("RGB")
+        pixels = np.asarray(image)
+        assert image.size == (size, size)
+        assert np.any(np.all(pixels == (21, 24, 29), axis=2))
+        assert np.any(np.all(pixels == (44, 107, 208), axis=2))
+
+    launcher_spec = (ROOT / "packaging" / "launcher.spec").read_text()
+    assert "SpriteGuru.icns" in launcher_spec and "SpriteGuru.ico" in launcher_spec
+    assert "com.spriteguru.studio" in launcher_spec
 
     lib = work / S / "library"
     lib.mkdir(parents=True)
@@ -87,7 +105,8 @@ def test_brand(rec, work, run_dir):
             loaded, svg = drawn()
             rec.check(S, "the header mark is the brand kit's logo-mark.svg and it loads",
                       loaded and _same_drawing(svg, "logo-mark.svg"), loaded, ["B1"])
-            diff = _pixel_diff(mark.screenshot(), "logo-mark.svg")
+            ref = {name: _reference(browser, name) for name in ("logo-mark.svg", "logo-mark-on-dark.svg")}
+            diff = _pixel_diff(mark.screenshot(), ref["logo-mark.svg"])
             rec.check(S, "the header mark renders crisp, pixel for pixel like the brand SVG at 32 px",
                       diff <= 2, diff, ["B1", "B3"])
 
@@ -113,21 +132,21 @@ def test_brand(rec, work, run_dir):
             page.get_by_test_id("topbar-theme-toggle").click()
             expect(mark).to_have_attribute("data-variant", "on-dark", timeout=5000)
             loaded, svg = drawn()
-            diff = _pixel_diff(mark.screenshot(), "logo-mark-on-dark.svg")
-            rec.check(S, "the dark theme shows logo-mark-on-dark.svg, the white tile",
+            diff = _pixel_diff(mark.screenshot(), ref["logo-mark-on-dark.svg"])
+            rec.check(S, "the dark theme shows logo-mark-on-dark.svg, the same light tile",
                       loaded and _same_drawing(svg, "logo-mark-on-dark.svg") and diff <= 2, diff, ["B2"])
             shot(page, "02-header-dark", clip={"x": 0, "y": 0, "width": 700, "height": 120})
             page.get_by_test_id("topbar-theme-toggle").click()
             expect(mark).to_have_attribute("data-variant", "light", timeout=5000)
             loaded, svg = drawn()
-            diff = _pixel_diff(mark.screenshot(), "logo-mark.svg")
-            rec.check(S, "switching back to the light theme brings back the black tile",
+            diff = _pixel_diff(mark.screenshot(), ref["logo-mark.svg"])
+            rec.check(S, "switching back to the light theme brings back logo-mark.svg",
                       loaded and _same_drawing(svg, "logo-mark.svg") and diff <= 2, diff, ["B2"])
 
             page.set_viewport_size({"width": 820, "height": 700})
             page.wait_for_function("() => getComputedStyle(document.querySelector('.brand')).width === '60px'")
             narrow = geometry()
-            diff = _pixel_diff(mark.screenshot(), "logo-mark.svg")
+            diff = _pixel_diff(mark.screenshot(), ref["logo-mark.svg"])
             rec.check(S, "at a narrow width (60 px rail) the mark keeps its size, grid and clear space",
                       good(narrow) and diff <= 2, {**narrow, "diff": diff}, ["B3"])
             shot(page, "03-header-narrow", clip={"x": 0, "y": 0, "width": 500, "height": 120})
@@ -164,3 +183,4 @@ def test_brand(rec, work, run_dir):
            found.returncode, none.returncode]
     rec.check(S, "a frozen build uses the icon it carries; with no brand files the icon is skipped, no error",
               got == [True, "None", 0, 0], got, ["B6", "B7"])
+    assert all(check["pass"] for check in rec.checks if check["scenario"] == S)

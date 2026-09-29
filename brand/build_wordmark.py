@@ -1,4 +1,4 @@
-"""Convert "SpritePlay" set in Unbounded (weight 750, letter-spacing -0.03em, as on the website)
+"""Convert "SpriteGuru" set in Unbounded (weight 750, letter-spacing -0.03em)
 into SVG outlines and compose the horizontal logo next to the mark. The committed SVGs are the
 masters; rerun only if the wordmark changes.
 
@@ -16,10 +16,10 @@ from fontTools.pens.transformPen import TransformPen
 import uharfbuzz as hb
 
 WOFF2 = sys.argv[1] if len(sys.argv) > 1 else str(
-    Path(__file__).resolve().parents[2] / "spriteguru-web/node_modules/@fontsource-variable/unbounded/files/unbounded-latin-wght-normal.woff2"
+    Path(__file__).resolve().parents[1] / "studio/node_modules/@fontsource-variable/unbounded/files/unbounded-latin-wght-normal.woff2"
 )
 OUT = Path(__file__).resolve().parent / "svg"
-TEXT, WGHT, TRACK = "SpritePlay", 750, -0.03
+TEXT, WGHT, TRACK = "SpriteGuru", 750, -0.03
 
 font = TTFont(WOFF2)
 font.flavor = None
@@ -61,24 +61,25 @@ tx = MARK + GAP - x0 * scale
 ty = MARK / 2 + cap / 2 * scale
 W = MARK + GAP + text_w
 
-MARK_PIX = [(1,0),(2,0),(3,0),(0,1),(1,2),(2,2),(3,2),(4,3),(0,4),(1,4),(2,4),(3,4)]
-def mark(tile, glyph):
-    r = "".join(f'<rect x="{6+c*4}" y="{6+rr*4}" width="4" height="4"/>' for c, rr in MARK_PIX)
-    return (f'<rect width="32" height="32" rx="8" fill="{tile}"/><g fill="{glyph}">{r}</g>'
-            f'<rect x="22" y="6" width="4" height="4" fill="#FFD20A"/>')
+S_PATH = "M24 22h49v16H41v11h31v25H23V58h33V47H24z"
+def mark():
+    return ('<g transform="scale(.3333333333)">'
+            '<rect x="3" y="3" width="90" height="90" rx="22" fill="#F5F6F8"/>'
+            f'<path d="{S_PATH}" fill="#15181D"/>'
+            '<rect x="57" y="58" width="15" height="16" fill="#2C6BD0"/></g>')
 
-def svg(tile, glyph, ink):
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W:.2f} {MARK:g}" role="img" aria-label="SpritePlay">'
-            f'{mark(tile, glyph)}'
+def svg(ink):
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W:.2f} {MARK:g}" role="img" aria-label="SpriteGuru">'
+            f'{mark()}'
             f'<path fill="{ink}" transform="translate({tx:.3f} {ty:.3f}) scale({scale:.6f} {-scale:.6f})" d="{d}"/></svg>\n')
 
 def wordmark(ink):
     h = MARK
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {text_w:.2f} {text_h:.2f}" role="img" aria-label="SpritePlay">'
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {text_w:.2f} {text_h:.2f}" role="img" aria-label="SpriteGuru">'
             f'<path fill="{ink}" transform="translate({-x0*scale:.3f} {y1*scale:.3f}) scale({scale:.6f} {-scale:.6f})" d="{d}"/></svg>\n')
 
-(OUT / "logo-horizontal.svg").write_text(svg("#000000", "#FFFFFF", "#000000"))
-(OUT / "logo-horizontal-on-dark.svg").write_text(svg("#FFFFFF", "#000000", "#FFFFFF"))
+(OUT / "logo-horizontal.svg").write_text(svg("#15181D"))
+(OUT / "logo-horizontal-on-dark.svg").write_text(svg("#FFFFFF"))
 (OUT / "wordmark.svg").write_text(wordmark("#000000"))
 (OUT / "wordmark-on-dark.svg").write_text(wordmark("#FFFFFF"))
 print("ok", round(W, 2), "x", MARK, "text", round(text_w, 1), round(text_h, 1))

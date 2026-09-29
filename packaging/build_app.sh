@@ -14,10 +14,10 @@ mkdir -p "$target/engine"
 cp -R ../dist/spriteguru-engine/. "$target/engine/"
 if [ -d "$app" ]; then
   plist=$app/Contents/Info.plist
-  # N12: the bundle carries the app's name and id
+  # OS6: the bundle carries the app's name and id
   name=$(/usr/libexec/PlistBuddy -c "Print :CFBundleName" "$plist")
   id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$plist")
-  [ "$name" = SpriteGuru ] && [ "$id" = com.spriteplay.studio ] || { echo "bundle is $name ($id)" >&2; exit 1; }
+  [ "$name" = SpriteGuru ] && [ "$id" = com.spriteguru.studio ] || { echo "bundle is $name ($id)" >&2; exit 1; }
   echo "bundle: $name ($id)"
   # B5: the bundle's icon must be the brand kit's, not PyInstaller's default
   icon=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIconFile" "$plist")
