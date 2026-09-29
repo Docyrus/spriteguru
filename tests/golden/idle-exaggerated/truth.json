@@ -1,0 +1,133 @@
+{
+  "case": "idle-exaggerated",
+  "covers": [
+    "T7"
+  ],
+  "size": [
+    1600,
+    352
+  ],
+  "cell": [
+    320,
+    352
+  ],
+  "strip": true,
+  "cols": 4,
+  "rows": 1,
+  "char_h": 267.89277894949447,
+  "frames": [
+    {
+      "slot": 0,
+      "playback": 0,
+      "box": [
+        439,
+        50,
+        517,
+        327
+      ],
+      "origin": [
+        469.0172163293647,
+        323.84000000000003
+      ],
+      "torso_x": 469.7418992466399,
+      "ground_y": 327.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 1,
+      "playback": 1,
+      "box": [
+        759,
+        29,
+        837,
+        327
+      ],
+      "origin": [
+        789.0172163293647,
+        323.84000000000003
+      ],
+      "torso_x": 791.3061697839516,
+      "ground_y": 327.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 2,
+      "playback": 2,
+      "box": [
+        1079,
+        14,
+        1161,
+        326
+      ],
+      "origin": [
+        1109.0172163293646,
+        323.84000000000003
+      ],
+      "torso_x": 1111.9860319321253,
+      "ground_y": 326.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 3,
+      "playback": 3,
+      "box": [
+        1399,
+        32,
+        1477,
+        326
+      ],
+      "origin": [
+        1429.0172163293646,
+        323.84000000000003
+      ],
+      "torso_x": 1431.045623919511,
+      "ground_y": 326.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    }
+  ],
+  "expect": {
+    "findings": [
+      "idle_motion"
+    ]
+  },
+  "guided": true,
+  "logical": [],
+  "spec": {
+    "character": {
+      "description": "synthetic fixture character",
+      "refs": [],
+      "palette": [],
+      "heads_tall": 5.0,
+      "mirrorable": true,
+      "kind": "character",
+      "blend": "normal"
+    },
+    "view": "side",
+    "facing": "E",
+    "action": "idle",
+    "frames": 4,
+    "loop": true,
+    "motion": "in-place",
+    "style": {
+      "kind": "hd-cartoon",
+      "pixel_height": null,
+      "palette_size": 16,
+      "outline": "dark"
+    },
+    "key": "#00FF00",
+    "fps": 12,
+    "engine": "godot"
+  }
+}

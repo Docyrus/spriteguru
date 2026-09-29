@@ -70,7 +70,7 @@ def install(force: bool = False) -> None:
 
     from ..filelock import FileLock
 
-    with FileLock(browsers_dir() / ".spriteplay-install.lock"):
+    with FileLock(browsers_dir() / ".spriteguru-install.lock"):
         if installed() and not force:  # another job or window just installed it (BR3)
             return
         print("spriteguru: downloading the vector renderer (one time, about 100 MB)", file=sys.stderr, flush=True)

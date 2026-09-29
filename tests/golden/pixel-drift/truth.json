@@ -1,0 +1,224 @@
+{
+  "case": "pixel-drift",
+  "covers": [
+    "X3",
+    "X4",
+    "X6",
+    "X7",
+    "X8"
+  ],
+  "size": [
+    1280,
+    704
+  ],
+  "cell": [
+    320,
+    352
+  ],
+  "strip": false,
+  "cols": 4,
+  "rows": 2,
+  "char_h": 40,
+  "frames": [
+    {
+      "slot": 0,
+      "playback": 0,
+      "box": [
+        96,
+        20,
+        252,
+        332
+      ],
+      "origin": [
+        159.72962599408837,
+        323.84000000000003
+      ],
+      "torso_x": 160.03317454029744,
+      "ground_y": 332.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 1,
+      "playback": 1,
+      "box": [
+        388,
+        12,
+        548,
+        331
+      ],
+      "origin": [
+        479.72962599408834,
+        323.84000000000003
+      ],
+      "torso_x": 480.1342135418043,
+      "ground_y": 331.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 2,
+      "playback": 2,
+      "box": [
+        739,
+        15,
+        852,
+        329
+      ],
+      "origin": [
+        799.7296259940883,
+        323.84000000000003
+      ],
+      "torso_x": 800.0331745402974,
+      "ground_y": 329.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 3,
+      "playback": 3,
+      "box": [
+        1072,
+        41,
+        1183,
+        330
+      ],
+      "origin": [
+        1119.7296259940883,
+        323.84000000000003
+      ],
+      "torso_x": 1120.0331745402975,
+      "ground_y": 330.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 4,
+      "playback": 4,
+      "box": [
+        97,
+        379,
+        248,
+        682
+      ],
+      "origin": [
+        159.72962599408837,
+        675.84
+      ],
+      "torso_x": 160.03317454029744,
+      "ground_y": 682.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 5,
+      "playback": 5,
+      "box": [
+        396,
+        387,
+        544,
+        682
+      ],
+      "origin": [
+        479.72962599408834,
+        675.84
+      ],
+      "torso_x": 480.1342135418043,
+      "ground_y": 682.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 6,
+      "playback": 6,
+      "box": [
+        745,
+        398,
+        848,
+        683
+      ],
+      "origin": [
+        799.7296259940883,
+        675.84
+      ],
+      "torso_x": 800.0331745402974,
+      "ground_y": 683.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 7,
+      "playback": 7,
+      "box": [
+        1067,
+        383,
+        1184,
+        685
+      ],
+      "origin": [
+        1119.7296259940883,
+        675.84
+      ],
+      "torso_x": 1120.0331745402975,
+      "ground_y": 685.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    }
+  ],
+  "expect": {
+    "pixel_match": 0.75
+  },
+  "guided": true,
+  "logical": [
+    "logical_0.png",
+    "logical_1.png",
+    "logical_2.png",
+    "logical_3.png",
+    "logical_4.png",
+    "logical_5.png",
+    "logical_6.png",
+    "logical_7.png"
+  ],
+  "spec": {
+    "character": {
+      "description": "synthetic fixture character",
+      "refs": [],
+      "palette": [],
+      "heads_tall": 4.0,
+      "mirrorable": true,
+      "kind": "character",
+      "blend": "normal"
+    },
+    "view": "side",
+    "facing": "E",
+    "action": "walk",
+    "frames": 8,
+    "loop": true,
+    "motion": "in-place",
+    "style": {
+      "kind": "pixel",
+      "pixel_height": 40,
+      "palette_size": 16,
+      "outline": "dark"
+    },
+    "key": "#00FF00",
+    "fps": 12,
+    "engine": "godot"
+  }
+}

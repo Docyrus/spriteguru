@@ -82,7 +82,7 @@ def aseprite_json(fs: FrameSet, rects, image: str, size: tuple[int, int]) -> dic
                     "rotated": False, "trimmed": False, "spriteSourceSize": {"x": 0, "y": 0, "w": rw, "h": rh},
                     "sourceSize": {"w": rw, "h": rh}, "duration": int(d)}
                    for i, ((x, y, rw, rh), d) in enumerate(zip(rects, fs.durations))],
-        "meta": {"app": "https://github.com/spriteguru", "version": __version__, "image": image, "format": "RGBA8888",
+        "meta": {"app": "https://github.com/Docyrus/spriteguru", "version": __version__, "image": image, "format": "RGBA8888",
                  "size": {"w": size[0], "h": size[1]}, "scale": "1",
                  "frameTags": [{"name": fs.action, "from": 0, "to": len(rects) - 1,
                                 "direction": "forward", **({} if fs.loop else {"repeat": "1"})}],

@@ -9,6 +9,8 @@ wheels/
 
 # Local secrets and state
 .env
+.spriteguru/
+.spriteplay/
 *.sprites/
 *.sprites/cache/
 *.sprites/animations/*/jobs/
@@ -18,6 +20,9 @@ e2e/artifacts/
 e2e/work/
 e2e/.mirror/
 .superpowers/
+
+# Copies of third-party provider documentation, kept for local reference only
+docs/provider-docs/
 
 # Studio
 studio/node_modules/

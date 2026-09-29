@@ -1,0 +1,169 @@
+{
+  "case": "sword-cross",
+  "covers": [
+    "L4"
+  ],
+  "size": [
+    1040,
+    704
+  ],
+  "cell": [
+    260,
+    352
+  ],
+  "strip": true,
+  "cols": 3,
+  "rows": 2,
+  "char_h": 210.69829677426998,
+  "frames": [
+    {
+      "slot": 0,
+      "playback": 0,
+      "box": [
+        301,
+        108,
+        478,
+        327
+      ],
+      "origin": [
+        352.09709852981536,
+        323.84000000000003
+      ],
+      "torso_x": 354.37522191187963,
+      "ground_y": 327.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 1,
+      "playback": 1,
+      "box": [
+        511,
+        87,
+        665,
+        326
+      ],
+      "origin": [
+        612.0970985298154,
+        323.84000000000003
+      ],
+      "torso_x": 607.5519505538081,
+      "ground_y": 326.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 2,
+      "playback": 2,
+      "box": [
+        815,
+        15,
+        954,
+        326
+      ],
+      "origin": [
+        872.0970985298154,
+        323.84000000000003
+      ],
+      "torso_x": 877.768141697034,
+      "ground_y": 326.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 3,
+      "playback": 3,
+      "box": [
+        294,
+        465,
+        529,
+        678
+      ],
+      "origin": [
+        352.09709852981536,
+        675.84
+      ],
+      "torso_x": 361.09892834650617,
+      "ground_y": 678.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 4,
+      "playback": 4,
+      "box": [
+        557,
+        466,
+        743,
+        678
+      ],
+      "origin": [
+        612.0970985298154,
+        675.84
+      ],
+      "torso_x": 623.266873087303,
+      "ground_y": 678.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 5,
+      "playback": 5,
+      "box": [
+        821,
+        460,
+        998,
+        679
+      ],
+      "origin": [
+        872.0970985298154,
+        675.84
+      ],
+      "torso_x": 874.3752219118796,
+      "ground_y": 679.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    }
+  ],
+  "expect": {},
+  "guided": true,
+  "logical": [],
+  "spec": {
+    "character": {
+      "description": "synthetic fixture character",
+      "refs": [],
+      "palette": [],
+      "heads_tall": 5.0,
+      "mirrorable": true,
+      "kind": "character",
+      "blend": "normal"
+    },
+    "view": "side",
+    "facing": "E",
+    "action": "attack-melee",
+    "frames": 6,
+    "loop": false,
+    "motion": "in-place",
+    "style": {
+      "kind": "hd-cartoon",
+      "pixel_height": null,
+      "palette_size": 16,
+      "outline": "dark"
+    },
+    "key": "#00FF00",
+    "fps": 12,
+    "engine": "godot"
+  }
+}

@@ -62,8 +62,8 @@ class JobState(BaseModel):
 
 
 class EventBus:
-    """Engine events for the studio and the sync scheduler. `publish` may be called from worker
-    threads (cloud calls and sync rounds run there): each queue is fed on its own event loop."""
+    """Engine events for the studio. `publish` may be called from worker threads (OS5): each queue
+    is fed on its own event loop."""
 
     def __init__(self, keep: int = 1000):
         self._subs: dict[asyncio.Queue, asyncio.AbstractEventLoop | None] = {}

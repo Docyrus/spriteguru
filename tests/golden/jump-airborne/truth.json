@@ -1,0 +1,172 @@
+{
+  "case": "jump-airborne",
+  "covers": [
+    "R4"
+  ],
+  "size": [
+    1280,
+    704
+  ],
+  "cell": [
+    320,
+    352
+  ],
+  "strip": true,
+  "cols": 3,
+  "rows": 2,
+  "char_h": 227.6593570483693,
+  "frames": [
+    {
+      "slot": 0,
+      "playback": 0,
+      "box": [
+        408,
+        148,
+        514,
+        327
+      ],
+      "origin": [
+        433.82720024191974,
+        323.84000000000003
+      ],
+      "torso_x": 453.5595522567947,
+      "ground_y": 327.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 1,
+      "playback": 1,
+      "box": [
+        728,
+        39,
+        812,
+        327
+      ],
+      "origin": [
+        753.8272002419197,
+        323.84000000000003
+      ],
+      "torso_x": 757.5157170667388,
+      "ground_y": 327.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 2,
+      "playback": 2,
+      "box": [
+        1048,
+        15,
+        1129,
+        276
+      ],
+      "origin": [
+        1073.8272002419199,
+        323.84000000000003
+      ],
+      "torso_x": 1078.7382293377843,
+      "ground_y": 276.0,
+      "airborne": true,
+      "lift": 50.08505855064124,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 3,
+      "playback": 3,
+      "box": [
+        408,
+        371,
+        528,
+        610
+      ],
+      "origin": [
+        433.82720024191974,
+        675.84
+      ],
+      "torso_x": 436.28871090611483,
+      "ground_y": 610.0,
+      "airborne": true,
+      "lift": 68.29780711451079,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 4,
+      "playback": 4,
+      "box": [
+        728,
+        418,
+        852,
+        651
+      ],
+      "origin": [
+        753.8272002419197,
+        675.84
+      ],
+      "torso_x": 755.0587057739132,
+      "ground_y": 651.0,
+      "airborne": true,
+      "lift": 27.319122845804312,
+      "flipped": false,
+      "scale": 1.0
+    },
+    {
+      "slot": 5,
+      "playback": 5,
+      "box": [
+        1048,
+        470,
+        1191,
+        678
+      ],
+      "origin": [
+        1073.8272002419199,
+        675.84
+      ],
+      "torso_x": 1087.0460181534077,
+      "ground_y": 678.0,
+      "airborne": false,
+      "lift": 0.0,
+      "flipped": false,
+      "scale": 1.0
+    }
+  ],
+  "expect": {
+    "no_fail": true,
+    "lift": true
+  },
+  "guided": true,
+  "logical": [],
+  "spec": {
+    "character": {
+      "description": "synthetic fixture character",
+      "refs": [],
+      "palette": [],
+      "heads_tall": 5.0,
+      "mirrorable": true,
+      "kind": "character",
+      "blend": "normal"
+    },
+    "view": "side",
+    "facing": "E",
+    "action": "jump",
+    "frames": 6,
+    "loop": false,
+    "motion": "in-place",
+    "style": {
+      "kind": "hd-cartoon",
+      "pixel_height": null,
+      "palette_size": 16,
+      "outline": "dark"
+    },
+    "key": "#00FF00",
+    "fps": 12,
+    "engine": "godot"
+  }
+}

@@ -1,7 +1,7 @@
 """onnxruntime set-up shared by every model session (embeddings, the ML matte through rembg).
 
 RT1: onnxruntime's bundled telemetry uploads over HTTP from a background thread; a response landing
-while the process exits aborts it (libc++abi recursive_mutex), and SpritePlay must not contact
+while the process exits aborts it (libc++abi recursive_mutex), and SpriteGuru must not contact
 anyone but the user's own providers. Telemetry is switched off before the first session exists."""
 
 from __future__ import annotations

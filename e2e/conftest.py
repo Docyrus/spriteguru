@@ -260,7 +260,7 @@ def _html(s: dict) -> str:
     by: dict[str, list] = {}
     for c in s["checks"]:
         by.setdefault(c["scenario"], []).append(c)
-    parts = [f"<h1>SpritePlay E2E</h1><p class='muted'>{html.escape(s['run'])} · {s['time']} · "
+    parts = [f"<h1>SpriteGuru E2E</h1><p class='muted'>{html.escape(s['run'])} · {s['time']} · "
              f"{'live + offline' if s['live'] else 'offline (synthetic providers)'}</p>",
              f"<div class='card'><b>{s['checks_passed']}/{s['checks_total']}</b> checks pass · digest "
              f"<code>{s['digest'][:16]}</code><div class='muted'>failure modes verified: "
@@ -281,4 +281,4 @@ def _html(s: dict) -> str:
                      f"<th>Covers</th></tr>{rows}</table>{'<ul>' + links + '</ul>' if links else ''}"
                      f"{'<div>' + imgs + '</div>' if imgs else ''}"
                      f"{'<pre>' + html.escape(json.dumps(note, indent=1)[:4000]) + '</pre>' if note else ''}</div>")
-    return page("SpritePlay E2E", "".join(parts))
+    return page("SpriteGuru E2E", "".join(parts))
