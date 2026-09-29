@@ -24,14 +24,10 @@ import type {
   RepairResult,
   Report,
   Candidate,
-  CloudAccess,
-  CloudProject,
-  CloudStatus,
   SubjectKind,
-  SyncStatus,
 } from './types';
 
-const TOKEN_KEY = 'spritekit.token';
+const TOKEN_KEY = 'spriteguru.token';
 
 function captureToken(): string {
   let token = '';
@@ -67,7 +63,7 @@ export const noProjectListeners = new Set<() => void>();
 
 export class ApiError extends Error {
   status: number;
-  /** The machine-readable reason, when the engine gives one (cloud errors, `access_required`). */
+  /** The machine-readable reason supplied by an engine error. */
   code?: string;
   constructor(status: number, message: string, code?: string) {
     super(message);
@@ -112,7 +108,7 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   try {
     res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch {
-    throw new ApiError(0, 'The engine is not responding. Check that spritekit is still running.');
+    throw new ApiError(0, 'The engine is not responding. Check that SpriteGuru is still running.');
   }
   const text = await res.text();
   let data: unknown = null;
@@ -124,7 +120,7 @@ export async function request<T>(method: string, path: string, body?: unknown): 
     }
   }
   if (!res.ok) {
-    if (res.status === 401) throw new ApiError(401, 'The studio token is missing or expired. Reopen the studio from spritekit.');
+    if (res.status === 401) throw new ApiError(401, 'The studio token is missing or expired. Reopen the studio from SpriteGuru.');
     const detail = detailOf(data, `${method} ${path} failed with ${res.status}`);
     if (res.status === 409 && detail === NO_PROJECT) noProjectListeners.forEach((l) => l());
     throw new ApiError(res.status, detail, codeOf(data));
@@ -235,39 +231,4 @@ export const api = {
     request<Candidate>('POST', `/api/jobs/${enc(id)}/layout`, { candidate, cells }),
 
   ledger: (limit = 200) => request<{ summary: LedgerSummary; entries: LedgerEntry[] }>('GET', `/api/ledger?limit=${limit}`),
-
-  /** The account, this machine and its access; never a token. `refresh` asks the server now. */
-  cloudStatus: (refresh = false) => request<CloudStatus>('GET', `/api/cloud/status${refresh ? '?refresh=true' : ''}`),
-  cloudAccessRefresh: () => request<CloudAccess>('POST', '/api/cloud/access/refresh'),
-  /** Starts a browser sign-in; open `authorize_url` with the host adapter. */
-  cloudSignIn: () => request<{ authorize_url: string; expires_in: number }>('POST', '/api/cloud/sign-in'),
-  cloudSignInCancel: () => request<{ ok: boolean }>('POST', '/api/cloud/sign-in/cancel'),
-  cloudSignOut: () => request<{ signed_in: boolean }>('POST', '/api/cloud/sign-out'),
-  cloudRenameMachine: (name: string) => request<{ name: string }>('PATCH', '/api/cloud/machine', { name }),
-  setAutoSync: (on: boolean) => request<{ auto: boolean }>('PUT', '/api/cloud/auto-sync', { on }),
-
-  /** The open project's link and sync state. */
-  projectSync: () => request<SyncStatus>('GET', '/api/project/sync'),
-  syncLink: (owner: string) => request<{ project: CloudProject; sync: SyncStatus }>('POST', '/api/project/sync/link', { owner }),
-  syncUnlink: () => request<{ linked: boolean }>('POST', '/api/project/sync/unlink'),
-  syncNow: () => request<{ rev: number; pushed: string[]; pulled: string[]; conflicts: number }>('POST', '/api/project/sync/now', {}),
-  syncResolve: (choices: SyncChoice[]) => request<{ resolved: number; open: number }>('POST', '/api/project/sync/resolve', { choices }),
-  /** A copied folder (C29): keep syncing it here, or make it a separate project. */
-  syncCopied: (keep: boolean) => request<SyncStatus>('POST', '/api/project/sync/copied', { keep }),
-  cloudProjects: () => request<{ projects: CloudProject[] }>('GET', '/api/cloud/projects'),
-  cloudDownload: (id: string, location?: string | null) =>
-    request<{ path: string; opened: boolean; card: ProjectCard }>('POST', `/api/cloud/projects/${enc(id)}/download`, { location: location ?? null }),
-  cloudDownloadCancel: (id: string) => request<{ cancelling: boolean }>('POST', `/api/cloud/projects/${enc(id)}/download/cancel`),
 };
-
-/** A conflict choice for one file or a whole asset group. */
-export interface SyncChoice {
-  path?: string;
-  group?: string;
-  keep: 'mine' | 'theirs';
-}
-
-/** A cloud file (thumbnail or conflict preview) through the engine, which holds the token. */
-export function cloudBlobUrl(owner: string, sha: string): string {
-  return `/api/cloud/blob/${enc(owner)}/${enc(sha)}?token=${enc(token)}`;
-}

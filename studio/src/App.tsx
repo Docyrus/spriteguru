@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { token } from './lib/api';
 import { startEvents } from './lib/events';
 import { href, redirect, useRoute, type Route } from './lib/router';
-import { CloudProvider } from './lib/cloud';
 import { pickAnimation, StoreProvider, useStore } from './lib/store';
 import { Approvals } from './shell/Approvals';
 import { NavRail } from './shell/NavRail';
@@ -18,7 +17,6 @@ import { FrameEditor } from './screens/FrameEditor';
 import { Findings } from './screens/Findings';
 import { ExportScreen } from './screens/Export';
 import { ProjectsScreen } from './screens/Projects';
-import { LibraryScreen } from './screens/Library';
 import { SettingsScreen } from './screens/Settings';
 
 const ANIM_SCREENS = new Set(['candidates', 'sheet', 'frames', 'findings', 'export']);
@@ -139,11 +137,10 @@ function Screen() {
 
   // Without an open project only the gallery renders; everything else goes home.
   useEffect(() => {
-    if (noProject && route.screen !== 'projects' && route.screen !== 'library') redirect('projects');
+    if (noProject && route.screen !== 'projects') redirect('projects');
   }, [noProject, route.screen]);
 
   if (route.screen === 'projects') return <ProjectsScreen />;
-  if (route.screen === 'library') return <LibraryScreen />;
   if (!project) {
     return noProject ? null : (
       <div className="screen-body">
@@ -199,9 +196,9 @@ function Gate({ children }: { children: React.ReactNode }) {
   if (!token) {
     return (
       <div className="gate" data-testid="gate-no-token">
-        <h1>Open the studio from spritekit</h1>
+        <h1>Open the studio from SpriteGuru</h1>
         <p>
-          This page needs the launch token that <code>spritekit studio</code> or <code>spritekit serve</code> prints. Open the URL it gives you,
+          This page needs the launch token that <code>spriteguru studio</code> or <code>spriteguru serve</code> prints. Open the URL it gives you,
           which ends in <code>?token=…</code>.
         </p>
       </div>
@@ -243,9 +240,7 @@ export function App() {
   }, []);
   return (
     <StoreProvider>
-      <CloudProvider>
-        <Shell />
-      </CloudProvider>
+      <Shell />
     </StoreProvider>
   );
 }

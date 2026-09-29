@@ -8,9 +8,6 @@ import { SUBJECT_KINDS, type Blend, type CharacterRecord, type SubjectKind } fro
 import { Button, Empty, ErrorNote, Field, IconButton, Segmented, Spinner, Swatch, Toggle, WarnNote } from '../ui/controls';
 import { Icon } from '../ui/Icon';
 import { CharacterAnimations } from './CharacterAnimations';
-import { useGenerationLock } from '../lib/cloud';
-import { AccessBanner } from '../shell/Account';
-import { PublishDialog } from './Library';
 
 /** Every view a subject can have, in sheet order: the turnaround's four, or an effect's one design view. */
 const VIEWS: { key: string; label: string }[] = [
@@ -101,11 +98,7 @@ function ModelSheet({ rec, bust }: { rec: CharacterRecord; bust: string }) {
 
 const hasViewsOf = (rec: CharacterRecord) => Object.keys(rec.views).length > 0;
 
-/** The folder name a subject's files live under (spritekit.project.slug). */
-const slugOf = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-
 function CharacterRow({ rec, onChanged }: { rec: CharacterRecord; onChanged: () => void }) {
-  const [publishing, setPublishing] = useState(false);
   const { toast } = useStore();
   const ev = useEvents();
   const ta = ev.turnaround[rec.name];
@@ -196,17 +189,9 @@ function CharacterRow({ rec, onChanged }: { rec: CharacterRecord; onChanged: () 
         </span>
         <span className="spacer" />
         {rec.approved ? (
-          <Button size="sm" variant="quiet" icon="library" data-testid="character-publish" onClick={() => setPublishing(true)}>
-            Add to library
-          </Button>
-        ) : null}
-        {rec.approved ? (
           <Button size="sm" variant="quiet" icon="builder" data-testid="character-animate" onClick={() => navigate('builder')}>
             Animate
           </Button>
-        ) : null}
-        {publishing ? (
-          <PublishDialog prefix={`characters/${slugOf(rec.name)}/`} name={rec.name} kind={rec.kind} onClose={() => setPublishing(false)} />
         ) : null}
       </header>
 
@@ -412,7 +397,6 @@ interface RefImage {
 }
 
 function NewCharacterForm({ onCreated, onClose }: { onCreated: (name: string) => void; onClose?: () => void }) {
-  const { locked } = useGenerationLock();
   const { toast, characters } = useStore();
   const [kind, setKind] = useState<SubjectKind>('character');
   const [blend, setBlend] = useState<Blend>('add');
@@ -660,8 +644,7 @@ function NewCharacterForm({ onCreated, onClose }: { onCreated: (name: string) =>
           </div>
         </Field>
         {error ? <ErrorNote testid="character-form-error">{error}</ErrorNote> : null}
-        <AccessBanner testid="character-form-access" />
-        <Button type="submit" variant="primary" icon="sparkle" busy={busy} disabled={locked} data-testid="character-form-submit">
+        <Button type="submit" variant="primary" icon="sparkle" busy={busy} data-testid="character-form-submit">
           {image && imageAsView ? 'Create from image' : kind === 'effect' ? 'Create and draw design' : 'Create and draw turnaround'}
         </Button>
       </div>

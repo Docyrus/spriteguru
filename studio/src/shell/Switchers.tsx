@@ -11,7 +11,7 @@ import type { CharacterRecord, ProjectCard } from '../lib/types';
 import { Menu, type MenuEntry } from '../ui/controls';
 import { Icon } from '../ui/Icon';
 
-const OPEN_CHARACTERS = 'spriteplay:open-character-switcher';
+const OPEN_CHARACTERS = 'spriteguru:open-character-switcher';
 
 /** Opens the header's character dropdown, e.g. from the builder's "Change" button. */
 export function openCharacterSwitcher() {

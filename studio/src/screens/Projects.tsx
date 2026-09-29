@@ -1,16 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { api, cloudBlobUrl, fileUrl } from '../lib/api';
-import { useCloud } from '../lib/cloud';
-import { useEngineEvent } from '../lib/events';
-import { cardsWithCurrent, ENGINE_LABEL, fileSize, STYLE_LABEL, timeAgo } from '../lib/format';
+import { api, fileUrl } from '../lib/api';
+import { cardsWithCurrent, ENGINE_LABEL, STYLE_LABEL, timeAgo } from '../lib/format';
 import { useHostKind } from '../lib/hooks';
 import { navigate, redirect, useRoute } from '../lib/router';
 import { errText, useStore } from '../lib/store';
-import { ENGINES, type CloudProject, type EngineName, type ProjectCard, type StyleKind } from '../lib/types';
+import { ENGINES, type EngineName, type ProjectCard, type StyleKind } from '../lib/types';
 import { host } from '../host';
 import { Button, ErrorNote, Field, IconButton, Menu, Modal, Segmented, Spinner } from '../ui/controls';
 import { Icon } from '../ui/Icon';
-import { AccessBanner, UpdateBanner } from '../shell/Account';
 
 const STYLES: StyleKind[] = ['pixel', 'hd-cartoon', 'painted', 'vector'];
 
@@ -37,7 +34,6 @@ function ProjectTile({
   onOpen,
   onReveal,
   onRemove,
-  onSync,
 }: {
   card: ProjectCard;
   busy: boolean;
@@ -45,7 +41,6 @@ function ProjectTile({
   onOpen: () => void;
   onReveal: () => void;
   onRemove: () => void;
-  onSync: () => void;
 }) {
   const [thumbFailed, setThumbFailed] = useState(false);
   const blocked = card.missing || !!card.error;
@@ -82,7 +77,6 @@ function ProjectTile({
             {card.style ? <span className="badge">{STYLE_LABEL[card.style]}</span> : null}
             {card.engine ? <span className="badge">{ENGINE_LABEL[card.engine]}</span> : null}
             {card.current ? <span className="badge badge-accent">Open now</span> : null}
-            {card.cloud ? <SyncBadge c={card.cloud} /> : null}
           </span>
           {blocked ? (
             <span className="project-card-reason" data-testid="project-card-reason">
@@ -108,7 +102,6 @@ function ProjectTile({
           trigger={<Icon name="more" size={17} />}
           entries={[
             { key: 'open', label: 'Open', onSelect: onOpen, disabled: blocked, testid: 'project-card-menu-open' },
-            { key: 'sync', label: card.cloud ? 'Cloud sync…' : 'Sync to cloud…', onSelect: onSync, disabled: blocked, testid: 'project-card-sync-menu' },
             ...(canReveal ? [{ key: 'reveal', label: 'Reveal in Finder', onSelect: onReveal, disabled: card.missing, testid: 'project-card-reveal' }] : []),
             {
               key: 'remove',
@@ -123,138 +116,6 @@ function ProjectTile({
         />
       </div>
     </article>
-  );
-}
-
-function SyncBadge({ c }: { c: NonNullable<ProjectCard['cloud']> }) {
-  const [label, warn] = c.conflicts
-    ? [c.conflicts === 1 ? '1 conflict' : `${c.conflicts} conflicts`, true]
-    : c.paused === 'removed'
-      ? ['Removed from the cloud', true]
-      : c.paused
-        ? ['Sync paused', true]
-        : ['Synced', false];
-  return (
-    <span className={`badge ${warn ? 'badge-warn' : 'badge-ok'}`} data-testid="project-card-sync" data-conflicts={c.conflicts}>
-      {label}
-    </span>
-  );
-}
-
-/** Projects in the cloud that aren't on this machine yet (cloud plan 6.9). */
-function CloudRow() {
-  const cloud = useCloud();
-  const hostKind = useHostKind();
-  const { library, reloadProject, reloadLibrary, toast } = useStore();
-  const [rows, setRows] = useState<CloudProject[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState<string | null>(null);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const signedIn = !!cloud.status?.signed_in;
-  const libraryKey = library?.projects.map((p) => p.id).join(',');
-
-  useEffect(() => {
-    if (!signedIn) {
-      setRows(null);
-      return;
-    }
-    let live = true;
-    api
-      .cloudProjects()
-      .then((r) => live && (setRows(r.projects), setError(null)))
-      .catch((e) => live && setError(errText(e)));
-    return () => {
-      live = false;
-    };
-  }, [signedIn, libraryKey]);
-
-  useEngineEvent((e) => {
-    if (e.type === 'cloud_download_progress' && downloading && e.project_id === downloading) {
-      setProgress({ done: Number(e.done), total: Number(e.total) });
-    }
-  });
-
-  if (!signedIn) return null;
-  const remote = (rows ?? []).filter((r) => !r.local_path);
-  const download = async (r: CloudProject, choose = false) => {
-    let location: string | null = null;
-    if (choose) {
-      location = await host.pickFolder(library?.root ?? null);
-      if (!location) return;
-    }
-    setDownloading(r.id);
-    setProgress(null);
-    try {
-      const res = await api.cloudDownload(r.id, location);
-      toast(`Downloaded ${r.name}.`, 'ok');
-      await reloadLibrary();
-      if (res.opened) {
-        await reloadProject();
-        navigate('characters');
-      }
-    } catch (e) {
-      toast(errText(e), 'error');
-    } finally {
-      setDownloading(null);
-      setProgress(null);
-    }
-  };
-  return (
-    <section className="cloud-row" data-testid="cloud-row">
-      <h2 className="cloud-row-title">In the cloud</h2>
-      {error ? <ErrorNote testid="cloud-row-error">{error}</ErrorNote> : null}
-      {rows && !remote.length ? (
-        <p className="muted" data-testid="cloud-row-empty">
-          Every cloud project you can open is already on this machine.
-        </p>
-      ) : null}
-      <div className="project-grid">
-        {remote.map((r) => (
-          <article key={r.id} className="project-card cloud-card" data-testid="cloud-card" data-id={r.id} data-name={r.name}>
-            <span className={`project-thumb ${r.thumbnailSha ? 'checker' : 'ph-none'}`}>
-              {r.thumbnailSha ? (
-                <img src={cloudBlobUrl(r.ownerId, r.thumbnailSha)} alt="" draggable={false} data-testid="cloud-card-thumb" />
-              ) : (
-                <span className="project-thumb-mark" aria-hidden="true">
-                  <Icon name="projects" size={30} />
-                </span>
-              )}
-            </span>
-            <span className="project-card-body">
-              <span className="project-card-name">{r.name}</span>
-              <span className="project-card-badges">
-                <span className="badge" data-testid="cloud-card-workspace">
-                  {r.workspace.name}
-                </span>
-              </span>
-              <span className="project-card-meta">
-                {plural(r.fileCount, 'file')} · {fileSize(r.totalBytes)}
-              </span>
-              <span className="project-card-when">Synced {timeAgo(r.updatedAt)}</span>
-              {downloading === r.id ? (
-                <span className="cloud-card-progress" data-testid="cloud-card-progress">
-                  {progress ? `${progress.done} of ${progress.total} files` : 'Starting…'}
-                  <Button size="sm" variant="quiet" onClick={() => void api.cloudDownloadCancel(r.id)} data-testid="cloud-card-cancel">
-                    Cancel
-                  </Button>
-                </span>
-              ) : (
-                <span className="cloud-card-actions">
-                  <Button size="sm" icon="download" disabled={!!downloading} onClick={() => void download(r)} data-testid="cloud-card-download">
-                    Download
-                  </Button>
-                  {hostKind === 'pywebview' ? (
-                    <Button size="sm" variant="quiet" disabled={!!downloading} onClick={() => void download(r, true)} data-testid="cloud-card-download-to">
-                      Download to…
-                    </Button>
-                  ) : null}
-                </span>
-              )}
-            </span>
-          </article>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -478,8 +339,6 @@ export function ProjectsScreen() {
         </div>
       </div>
       <div className="screen-body">
-        <AccessBanner always />
-        <UpdateBanner />
         {libraryError && !library ? <ErrorNote testid="projects-error">{libraryError}</ErrorNote> : null}
         {!library && !libraryError ? <Spinner label="Loading projects…" /> : null}
         {library ? (
@@ -500,7 +359,6 @@ export function ProjectsScreen() {
                 onOpen={() => void open(c)}
                 onReveal={() => void reveal(c)}
                 onRemove={() => void remove(c)}
-                onSync={() => void open(c).then(() => navigate('settings'))}
               />
             ))}
           </div>
@@ -510,7 +368,6 @@ export function ProjectsScreen() {
             No projects yet. Start one with a style and an engine; it opens on the Characters tab.
           </p>
         ) : null}
-        <CloudRow />
       </div>
       {creating ? <NewProjectDialog root={library?.root ?? null} onClose={() => setCreating(false)} /> : null}
     </div>

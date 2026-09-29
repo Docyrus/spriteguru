@@ -9,8 +9,6 @@ import type { ActionInfo, AnimationSummary, Estimate, Facing, Motion, SubjectKin
 import { JobProgress } from '../shell/JobProgress';
 import { openCharacterSwitcher } from '../shell/Switchers';
 import { Button, Empty, ErrorNote, Field, Segmented, Spinner, Toggle } from '../ui/controls';
-import { useGenerationLock } from '../lib/cloud';
-import { AccessBanner } from '../shell/Account';
 
 interface Form {
   character: string;
@@ -30,7 +28,6 @@ const DEFAULT_ACTION: Record<SubjectKind, string> = { character: 'walk', vehicle
 const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function Builder() {
-  const { locked, status: lockStatus } = useGenerationLock();
   const { characters, animations, toast, setCurrentAnim, project, activeCharacter } = useStore();
   const ev = useEvents();
   // the builder animates the active character, picked in the header
@@ -204,7 +201,6 @@ export function Builder() {
           </span>
         ) : null}
       </div>
-      <AccessBanner />
       <div className="screen-body builder-layout">
         <section className="panel builder-form" data-testid="builder-form" aria-label="Animation settings">
           <div className="panel-body form-stack">
@@ -403,8 +399,7 @@ export function Builder() {
                       variant="primary"
                       icon="sparkle"
                       busy={starting}
-                      disabled={stale || planning || locked}
-                      title={locked ? lockStatus?.access.message : undefined}
+                      disabled={stale || planning}
                       onClick={() => void generate()}
                       data-testid="builder-generate"
                     >

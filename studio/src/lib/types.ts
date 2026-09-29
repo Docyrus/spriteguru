@@ -1,4 +1,4 @@
-// Mirrors of the engine's pydantic models (src/spritekit/spec.py, jobs.py) and API payloads (api.py).
+// Mirrors of the engine's pydantic models (src/spriteguru/spec.py, jobs.py) and API payloads (api.py).
 
 export type StyleKind = 'pixel' | 'hd-cartoon' | 'painted' | 'vector';
 export type EngineName = 'phaser' | 'pixi' | 'godot' | 'unity' | 'gamemaker';
@@ -51,7 +51,7 @@ export interface Settings {
   luna_effort: Effort;
   provider_mode: 'live' | 'synthetic';
   judge_enabled: boolean;
-  judge_disabled?: string[]; // judge issue types switched off by `spritekit eval judge`
+  judge_disabled?: string[]; // judge issue types switched off by `spriteguru eval judge`
 }
 
 export interface ProjectConfig {
@@ -110,8 +110,6 @@ export interface ProjectCard {
   missing: boolean; // the folder is gone; cannot be opened
   error: string | null; // project.json is unreadable
   current: boolean;
-  /** set when the project syncs to a cloud workspace */
-  cloud?: { project_id: string; owner_id: string; conflicts: number; paused: string | null; last_pull: string | null; last_push: string | null } | null;
 }
 
 export interface Library {
@@ -453,133 +451,3 @@ export type Edit =
   | { op: 'reorder'; order: number[] }
   | { op: 'delete'; frame: number }
   | { op: 'loop'; value: boolean };
-
-// ---- cloud account (cloud plan 4 and 5) ----------------------------------------------------------
-
-/** What the engine may do now: the server's last answer, the offline grace and this build's updates. */
-export interface CloudAccess {
-  allowed: boolean;
-  /** pro, team, license, trial, trial_available, trial_ended, signed_out or unknown */
-  status: string;
-  /** ok, signed_out, offline (grace over or clock moved), not_allowed or version */
-  reason: 'ok' | 'signed_out' | 'offline' | 'not_allowed' | 'version';
-  message: string;
-  stale: boolean;
-  checked_at: string | null;
-  trial_ends_at: string | null;
-  trial_days_left: number | null;
-  updates_until: string | null;
-  version_allowed: boolean;
-  cloud: boolean;
-  plan: string | null;
-  license: string | null;
-  version: string;
-}
-
-export interface CloudStorage {
-  used: number;
-  limit: number | null;
-}
-
-export interface CloudPersonal {
-  id: string;
-  plan: 'free' | 'license' | 'pro';
-  via: string;
-  cloud: boolean;
-  library: boolean;
-  limits: { storageBytes: number | null; devices: number | null; cloudProjects: number | null; maxFileBytes: number | null };
-  storage: CloudStorage;
-  projects: number;
-  devices: number;
-}
-
-export interface CloudTeam {
-  id: string;
-  name: string;
-  slug: string;
-  role: string;
-  active: boolean;
-  seats: number;
-  members: number;
-  storage: CloudStorage;
-}
-
-export interface CloudStatus {
-  signed_in: boolean;
-  /** false: no keychain on this machine, so the sign-in lasts only while the engine runs */
-  persisted: boolean;
-  cloud_url: string;
-  user: { id: string | null; name: string | null; email: string | null } | null;
-  machine: { id: string; name: string; device_id: string | null };
-  access: CloudAccess;
-  personal: CloudPersonal | null;
-  teams: CloudTeam[];
-  account_error: { code: string; message: string } | null;
-  pending_sign_in: { url: string; expires_in: number } | null;
-  /** the daily update check (cloud plan 9); null before one has succeeded */
-  update: CloudUpdate | null;
-}
-
-export interface CloudUpdate {
-  current: string;
-  available: boolean;
-  version: string | null; // the newest build this account may install
-  url: string | null;
-  notes: string | null;
-  latest: string | null; // the newest build published
-  needs_renewal: boolean; // the newest build needs renewed updates
-}
-
-// ---- project sync (cloud plan 6) ------------------------------------------------------------------
-
-export interface SyncConflictFile {
-  path: string;
-  group: string;
-  base: string | null;
-  local: { sha256: string; size: number } | null; // null: deleted on this machine
-  remote: { sha256: string | null; size: number; rev: number; deleted: boolean };
-}
-
-export interface SyncFinding {
-  code: string;
-  message: string;
-  path?: string;
-  paths?: string[];
-  other?: string;
-}
-
-export interface SyncStatus {
-  linked: boolean;
-  project_id?: string;
-  owner_id?: string;
-  workspace?: string | null;
-  rev?: number | null;
-  last_pull?: string | null;
-  last_push?: string | null;
-  paused?: { code: string; message: string } | null;
-  copied?: { project_id: string; owner_id: string } | null;
-  pending?: { push: number; paths?: string[] };
-  findings?: SyncFinding[];
-  conflicts?: { group: string; files: SyncConflictFile[] }[];
-  syncing?: boolean;
-  offline?: boolean;
-  auto?: boolean;
-  offline_message?: string | null;
-}
-
-export interface CloudProject {
-  id: string;
-  ownerId: string;
-  ownerType: 'user' | 'org';
-  name: string;
-  style: string | null;
-  engine: string | null;
-  headRev: number;
-  fileCount: number;
-  totalBytes: number;
-  thumbnailSha: string | null;
-  updatedAt: string;
-  creatorName: string | null;
-  workspace: { type: string; id: string; name: string };
-  local_path: string | null;
-}

@@ -10,7 +10,6 @@ import { host } from '../host';
 import { AnimHeader } from '../shell/AnimHeader';
 import { Button, Empty, ErrorNote, Field, Spinner } from '../ui/controls';
 import { Flipbook } from '../ui/Flipbook';
-import { PublishDialog } from './Library';
 
 const ENGINE_NOTE: Record<EngineName, string> = {
   phaser: 'PNG sheet with a TexturePacker-style JSON hash and an animations map.',
@@ -32,7 +31,6 @@ function fileKind(f: string): string {
 }
 
 export function ExportScreen({ anim }: { anim: string | null }) {
-  const [publishing, setPublishing] = useState(false);
   const { project, toast, reloadAnimations } = useStore();
   const ev = useEvents();
   const bust = anim ? String(ev.exported[anim] ?? 0) : '0';
@@ -173,20 +171,9 @@ export function ExportScreen({ anim }: { anim: string | null }) {
                 <div className="panel-head">
                   <h2>{result ? 'Exported files' : 'Current files'}</h2>
                   <span className="spacer" />
-                  <Button size="sm" variant="quiet" icon="library" disabled={!final} onClick={() => setPublishing(true)} data-testid="export-publish">
-                    Add to library
-                  </Button>
                   <Button size="sm" variant="quiet" icon="folder" disabled={!finalDir} onClick={() => void reveal(finalDir)} data-testid="export-reveal">
                     Show in folder
                   </Button>
-                  {publishing && anim ? (
-                    <PublishDialog
-                      prefix={`animations/${anim}/final/`}
-                      name={anim}
-                      kind={a.data?.spec.character.kind === 'effect' ? 'effect' : 'animation'}
-                      onClose={() => setPublishing(false)}
-                    />
-                  ) : null}
                 </div>
                 <ul className="file-list">
                   {nonFrames.map((f) => (

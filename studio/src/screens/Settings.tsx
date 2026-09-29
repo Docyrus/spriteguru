@@ -5,9 +5,6 @@ import { useAsync } from '../lib/hooks';
 import { errText, useStore } from '../lib/store';
 import { EFFORTS, ENGINES, type Effort, type EngineName, type LedgerEntry, type LedgerSummary } from '../lib/types';
 import { host } from '../host';
-import { useCloud } from '../lib/cloud';
-import { accessLabel } from '../shell/Account';
-import { SyncSettings } from '../shell/Sync';
 import { Button, ErrorNote, Field, Modal, Segmented, Spinner, Toggle } from '../ui/controls';
 
 
@@ -27,67 +24,6 @@ interface Draft {
   asset_folder: string;
   engine: EngineName;
   fps: string;
-}
-
-/** This machine and the SpritePlay account it is signed in to (cloud plan 5). */
-function AccountSection() {
-  const cloud = useCloud();
-  const s = cloud.status;
-  const [name, setName] = useState('');
-  const [renaming, setRenaming] = useState(false);
-  useEffect(() => {
-    if (s) setName(s.machine.name);
-  }, [s?.machine.name]); // eslint-disable-line react-hooks/exhaustive-deps
-  const rename = async () => {
-    setRenaming(true);
-    await cloud.renameMachine(name.trim());
-    setRenaming(false);
-  };
-  return (
-    <section className="panel" data-testid="settings-account">
-      <div className="panel-head">
-        <h2>Account</h2>
-      </div>
-      <div className="panel-body form-stack">
-        {!s ? (
-          <Spinner label="Reading the account…" />
-        ) : s.signed_in ? (
-          <div className="settings-account-row">
-            <span data-testid="settings-account-who">
-              Signed in as <b>{s.user?.email}</b> · {accessLabel(s.access, s)}
-            </span>
-            <Button size="sm" variant="quiet" busy={cloud.busy} onClick={() => void cloud.signOut()} data-testid="settings-account-sign-out">
-              Sign out
-            </Button>
-          </div>
-        ) : (
-          <div className="settings-account-row">
-            <span data-testid="settings-account-who">Not signed in. Sign in to start your 7-day trial.</span>
-            <Button size="sm" variant="primary" busy={cloud.busy} onClick={() => void cloud.signIn()} data-testid="settings-account-sign-in">
-              Sign in
-            </Button>
-          </div>
-        )}
-        {s ? (
-          <Field label="This machine" hint="The name on the Machines page of your account." htmlFor="s-machine">
-            <div className="inline-field">
-              <input id="s-machine" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} data-testid="settings-machine-name" />
-              <Button
-                size="sm"
-                disabled={!name.trim() || name.trim() === s.machine.name}
-                busy={renaming}
-                onClick={() => void rename()}
-                data-testid="settings-machine-rename"
-              >
-                Rename
-              </Button>
-            </div>
-          </Field>
-        ) : null}
-        <p className="muted small-print">Provider keys stay on this machine.</p>
-      </div>
-    </section>
-  );
 }
 
 function EffortPicker({ value, onChange, testid, label }: { value: string; onChange: (v: string) => void; testid: string; label: string }) {
@@ -297,11 +233,9 @@ export function SettingsScreen() {
         </div>
       ) : null}
       <div className="screen-body settings-grid">
-        <AccountSection />
-        <SyncSettings />
         <section className="panel" data-testid="settings-provider">
           <div className="panel-head">
-            <h2>Providers</h2>
+            <h2>Provider keys</h2>
           </div>
           <div className="panel-body form-stack">
             <Field label="Mode" hint={project.mode === 'live' ? 'Requests go to OpenAI, fal, Retro Diffusion and Quiver with your keys.' : 'The offline simulator draws placeholder art; nothing is sent or spent.'}>
@@ -363,7 +297,7 @@ export function SettingsScreen() {
                   ))}
                 </div>
               ) : (
-                <span className="muted">None. Label judge findings in Findings, then run <code>spritekit eval judge</code>.</span>
+                <span className="muted">None. Label judge findings in Findings, then run <code>spriteguru eval judge</code>.</span>
               )}
             </div>
           </div>

@@ -41,7 +41,6 @@ export function NavRail() {
   return (
     <nav className="rail" aria-label="Studio screens" data-testid="nav-rail">
       {item('projects', 'Projects', 'projects')}
-      {item('library', 'Library', 'library')}
       <span className="rail-rule" aria-hidden="true" />
       {TOP.map((i) => item(i.screen, i.label, i.icon, null, off))}
       <div className="rail-group" aria-label="Active character's animation">

@@ -6,8 +6,6 @@ import { navigate } from '../lib/router';
 import { errText, useStore } from '../lib/store';
 import { BrandMark, Icon } from '../ui/Icon';
 import { IconButton, StatePill } from '../ui/controls';
-import { AccountChip } from './Account';
-import { SyncPill } from './Sync';
 import { CharacterSwitcher, ProjectSwitcher } from './Switchers';
 
 type Theme = 'light' | 'dark';
@@ -83,14 +81,12 @@ export function TopBar() {
     <header className="topbar" data-testid="topbar">
       <div className="brand">
         <BrandMark dark={theme === 'dark'} />
-        <span className="brand-name">SpritePlay</span>
+        <span className="brand-name">SpriteGuru</span>
       </div>
       <div className="topbar-context">
         <ProjectSwitcher />
         <CharacterSwitcher />
       </div>
-      <AccountChip />
-      <SyncPill />
       {project ? (
         <span
           className={`mode-pill mode-${mode}`}

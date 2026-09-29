@@ -41,7 +41,6 @@ const P: Record<string, string> = {
   minus: 'M4 10h12',
   stop: 'M5 5h10v10H5z',
   sparkle: 'M10 3l1.4 4.2L15.6 8.6 11.4 10 10 14.2 8.6 10 4.4 8.6 8.6 7.2z',
-  library: 'M3.5 3.5h3.2v13H3.5zM8.4 3.5h3.2v13H8.4zM13.2 4.6l3-.9 2.9 11.9-3 .9z',
   report: 'M5 2.5h7l3.5 3.5v11.5H5zM12 2.5V6h3.5M7.5 10h5M7.5 13h5',
   drag: 'M7.5 5h.1M12.5 5h.1M7.5 10h.1M12.5 10h.1M7.5 15h.1M12.5 15h.1',
   fit: 'M3.5 7.5v-4h4M12.5 3.5h4v4M16.5 12.5v4h-4M7.5 16.5h-4v-4',
@@ -79,7 +78,7 @@ export function Icon({ name, size = 18, title }: { name: IconName | string; size
   );
 }
 
-/** The SpritePlay mark from the brand kit; the dark theme takes the white-tile variant. Drawn at
+/** The SpriteGuru mark from the brand kit; the dark theme takes the white-tile variant. Drawn at
  * 32 px so every pixel of the S is exactly 4 px. */
 export function BrandMark({ dark }: { dark: boolean }) {
   return (
@@ -88,7 +87,7 @@ export function BrandMark({ dark }: { dark: boolean }) {
       src={dark ? markOnDark : mark}
       width={32}
       height={32}
-      alt="SpritePlay"
+      alt="SpriteGuru"
       draggable={false}
       data-testid="topbar-brand-mark"
       data-variant={dark ? 'on-dark' : 'light'}
