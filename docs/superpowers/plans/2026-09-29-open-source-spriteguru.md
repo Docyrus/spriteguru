@@ -55,7 +55,7 @@
 - Produces: import package `spriteguru`; executable `spriteguru`; module entry `python -m spriteguru.cli`; engine binary `spriteguru-engine`; `spriteguru.env.get(name, default=None)` and `spriteguru.env.present(name)`.
 - Consumes: legacy `SPRITEKIT_<NAME>` values only when `SPRITEGURU_<NAME>` is absent.
 
-- [ ] **Step 1: Write the failing identity and environment tests**
+- [x] **Step 1: Write the failing identity and environment tests**
 
 Add these tests to `e2e/test_25_open_source.py`:
 
@@ -94,7 +94,7 @@ def test_spriteguru_environment_name_wins_and_spritekit_is_a_fallback():
     assert legacy.stdout.strip() == "old"
 ```
 
-- [ ] **Step 2: Run the tests and verify the package test fails for the right reason**
+- [x] **Step 2: Run the tests and verify the package test fails for the right reason**
 
 Run:
 
@@ -104,7 +104,7 @@ uv run pytest e2e/test_25_open_source.py::test_spriteguru_is_the_only_python_and
 
 Expected: FAIL because `spriteguru` does not exist and `spritekit` still imports.
 
-- [ ] **Step 3: Move the package and perform the mechanical namespace rewrite**
+- [x] **Step 3: Move the package and perform the mechanical namespace rewrite**
 
 Move `src/spritekit` to `src/spriteguru`. Update Python imports, resource package names, executable names, test subprocess modules, notebook imports, PyInstaller collection names, Vite output path, and package metadata. The essential `pyproject.toml` result is:
 
@@ -119,7 +119,7 @@ spriteguru = "spriteguru.cli:main"
 
 Set `studio/package.json` and both lockfile package records to `spriteguru-studio`. Rename `spritekit-engine` to `spriteguru-engine` throughout packaging and launcher discovery.
 
-- [ ] **Step 4: Add the canonical environment helper and use it for every app-specific environment read**
+- [x] **Step 4: Add the canonical environment helper and use it for every app-specific environment read**
 
 Create `src/spriteguru/env.py`:
 
@@ -143,11 +143,11 @@ def present(name: str) -> bool:
 
 Replace direct application reads of `SPRITEKIT_PROJECT`, `LIBRARY`, `ENV_FILE`, `DEV`, `VECTOR_BROWSER`, `MODELS`, `OFFLINE`, `MATTE_MODEL`, `LOG`, `BACKOFF_BASE`, `CRASH_AFTER`, `SYNTH_DEFECTS`, and `SYNTH_DELAY` with this helper. Tests emit canonical `SPRITEGURU_*` names except the explicit fallback test.
 
-- [ ] **Step 5: Update the E2E harness and packaging entries**
+- [x] **Step 5: Update the E2E harness and packaging entries**
 
 Change the E2E runner to invoke `[sys.executable, "-m", "spriteguru.cli", ...]`, name its worker field `spriteguru_run_id`, use `SPRITEGURU_LIBRARY`/`SPRITEGURU_LOG`, and update the file-backed keyring root lookup. Update `packaging/engine_entry.py` and `launcher_entry.py` to import `spriteguru`, and update all hidden imports and collected packages.
 
-- [ ] **Step 6: Refresh locks and verify the rename**
+- [x] **Step 6: Refresh locks and verify the rename**
 
 Run:
 
@@ -160,7 +160,7 @@ uv run python -c "import spriteguru; print(spriteguru.__version__)"
 
 Expected: both tests PASS; help identifies SpriteGuru; the import prints `0.1.0`.
 
-- [ ] **Step 7: Commit the namespace rename**
+- [x] **Step 7: Commit the namespace rename**
 
 ```bash
 git add pyproject.toml uv.lock src/spriteguru packaging studio/package.json studio/package-lock.json studio/vite.config.ts e2e notebooks
@@ -185,7 +185,7 @@ git commit -m "refactor: rename the application to SpriteGuru"
 - Consumes: `.spriteplay/local.json`, `.spriteplay-library.json`, `.spriteplay-cache`, `~/Documents/SpritePlay`, `spriteplay.*` browser keys, provider service `spritekit`, and cloud services `spriteplay-cloud`/`spriteguru-cloud`.
 - Preserves: `Project.open(root, migrate=True)`, `library.root()`, `library.listing()`, and `keys.get/set/delete/status()` public behavior.
 
-- [ ] **Step 1: Replace the old forward-rename scenario with failing reverse-migration tests**
+- [x] **Step 1: Replace the old forward-rename scenario with failing reverse-migration tests**
 
 Rewrite `e2e/test_24_rename.py` around local fixtures only. Include these assertions as separate tests:
 
@@ -243,7 +243,7 @@ Also add:
 - `test_provider_key_moves_from_spritekit_service_and_cloud_tokens_are_deleted` using `e2e/support/filekeyring.py`;
 - a Playwright check that `spriteplay.theme` migrates only when `spriteguru.theme` is absent.
 
-- [ ] **Step 2: Run the migration scenario and verify the direction fails**
+- [x] **Step 2: Run the migration scenario and verify the direction fails**
 
 Run:
 
@@ -253,7 +253,7 @@ uv run pytest e2e/test_24_rename.py -n 0 -q
 
 Expected: FAIL because the app still treats SpritePlay names as canonical, retains the cloud link/sync state, and uses the old provider keyring service.
 
-- [ ] **Step 3: Reverse the project-local migration and remove cloud fields on save**
+- [x] **Step 3: Reverse the project-local migration and remove cloud fields on save**
 
 In `project.py`, set:
 
@@ -267,7 +267,7 @@ Make `local_dir()` merge only known fields from the legacy `local.json`, preferr
 
 Delete `CloudLink` and the `ProjectConfig.cloud` field from `spec.py` in this step. That makes the legacy JSON field an ignored migration input rather than active project state, so the subsequent save drops it.
 
-- [ ] **Step 4: Reverse and harden the library-root migration**
+- [x] **Step 4: Reverse and harden the library-root migration**
 
 Use canonical constants:
 
@@ -284,7 +284,7 @@ LEGACY_NAMES = {
 
 Add `all_roots() -> tuple[Path, ...]`: the canonical root first and an existing SpritePlay root second only when both exist. `_candidates()` scans both roots plus merged recents. If only SpritePlay exists, rename it atomically to SpriteGuru and rewrite path prefixes in `recent` and `hidden`. If the rename fails, use SpritePlay for that run and log the failure. Merge state lists by normalized path, remove cloud-only keys (`machine_id`, `access`, `access_cache`, `auto_sync`, `release_check`, `release_server`), and expose `_reset_for_tests()` to clear the process migration cache safely between isolated test homes.
 
-- [ ] **Step 5: Migrate provider keys and delete cloud credentials locally**
+- [x] **Step 5: Migrate provider keys and delete cloud credentials locally**
 
 In `keys.py`, use:
 
@@ -296,11 +296,11 @@ CLOUD_SERVICES = ("spriteplay-cloud", "spriteguru-cloud")
 
 When `get(provider)` finds a legacy provider value, write it to `spriteguru`, delete only that legacy provider entry, and return it. `delete(provider)` removes both provider-service entries. Add an idempotent `cleanup_cloud_credentials()` that attempts to delete the known refresh-token usernames from both cloud services and ignores missing/backend errors; call it from the once-per-root library migration. Never delete provider keys.
 
-- [ ] **Step 6: Reverse browser preference migration**
+- [x] **Step 6: Reverse browser preference migration**
 
 In `studio/src/main.tsx`, enumerate the existing preference suffixes. Copy `spriteplay.<suffix>` to `spriteguru.<suffix>` only when the canonical value is absent, then remove the legacy key. Update every active local-storage read/write to `spriteguru.*`.
 
-- [ ] **Step 7: Verify migration tests and local gallery regression**
+- [x] **Step 7: Verify migration tests and local gallery regression**
 
 Run:
 
@@ -310,7 +310,7 @@ uv run pytest e2e/test_24_rename.py e2e/test_13_projects.py -n 0 -q
 
 Expected: PASS with no network server and no missing project assets.
 
-- [ ] **Step 8: Commit local migration**
+- [x] **Step 8: Commit local migration**
 
 ```bash
 git add src/spriteguru/project.py src/spriteguru/library.py src/spriteguru/spec.py src/spriteguru/keys.py studio/src/main.tsx e2e/test_24_rename.py .gitignore
@@ -346,7 +346,7 @@ git commit -m "feat: migrate local SpritePlay data to SpriteGuru"
 - Removes: `/auth/callback`, `/api/cloud/*`, `/api/project/sync*`, `cloud`, `sync`, and remote `library` CLI commands, cloud events, and `_require_access`.
 - Produces: `e2e.apphelp.Engine`, a cloud-agnostic loopback test-engine helper.
 
-- [ ] **Step 1: Write failing backend-removal tests**
+- [x] **Step 1: Write failing backend-removal tests**
 
 Create `e2e/test_17_local_only.py`:
 
@@ -404,7 +404,7 @@ def test_active_python_source_has_no_spriteplay_cloud_package_or_destination():
     assert hits == []
 ```
 
-- [ ] **Step 2: Run the removal tests and verify they fail on active cloud surfaces**
+- [x] **Step 2: Run the removal tests and verify they fail on active cloud surfaces**
 
 Run:
 
@@ -414,23 +414,23 @@ uv run pytest e2e/test_17_local_only.py -n 0 -q
 
 Expected: FAIL because routes, commands, `_require_access`, the cloud package, and the SpritePlay destination still exist.
 
-- [ ] **Step 3: Remove CLI cloud behavior and access gates**
+- [x] **Step 3: Remove CLI cloud behavior and access gates**
 
 Delete `cloud_app`, the remote `library_app`, their registrations and commands, `sync`, `_require_access`, and every `_require_access(...)` call. Keep provider approval/spend prompts. Replace all CLI guidance with `spriteguru ...` and keep synthetic/live provider selection unchanged.
 
-- [ ] **Step 4: Remove cloud state, lifecycle, exception handling, and routes from FastAPI**
+- [x] **Step 4: Remove cloud state, lifecycle, exception handling, and routes from FastAPI**
 
 Delete cloud imports and the `State.cloud`/`State.sync` fields. Remove sync scheduler start/stop/switch logic, access exceptions, cloud event handling, cloud open-prefix exceptions, all cloud/sync/library-asset routes, the auth callback, blob cache, cloud download state, and remote publish/import endpoints. Change the FastAPI title and token header to `spriteguru` / `x-spriteguru-token`. Keep `/api/library` because it is the local Projects gallery.
 
-- [ ] **Step 5: Remove cloud schema/card remnants and dependencies**
+- [x] **Step 5: Remove cloud schema/card remnants and dependencies**
 
 Confirm `CloudLink` and `ProjectConfig.cloud` were removed by Task 2, then delete `_cloud_card()`, `cloud_links()`, cloud fields in local project cards, and any service-layer account checks. Delete `src/spriteguru/cloud/`. Remove `pathspec` if `rg 'pathspec' src/spriteguru` finds no remaining use. Keep or move `httpx` to the dev group if it is needed only by E2E clients. Refresh `uv.lock`.
 
-- [ ] **Step 6: Replace cloud test helpers and delete cloud scenarios**
+- [x] **Step 6: Replace cloud test helpers and delete cloud scenarios**
 
 Create `e2e/apphelp.py` by retaining only the generic `Engine` process/client lifecycle from `cloudhelp.py`, invoking `spriteguru.cli`, using `SPRITEGURU_LIBRARY`, and never setting a cloud URL. Update remaining tests that need an engine helper. Delete fake cloud, cloud-account/sync/studio/library/contract scenarios, and the contract server script.
 
-- [ ] **Step 7: Verify backend removal and core API/CLI behavior**
+- [x] **Step 7: Verify backend removal and core API/CLI behavior**
 
 Run:
 
@@ -441,7 +441,7 @@ uv run pytest e2e/test_17_local_only.py e2e/test_07_api.py e2e/test_06_jobs.py -
 
 Expected: PASS; the API and job tests use only local/synthetic behavior.
 
-- [ ] **Step 8: Commit backend removal**
+- [x] **Step 8: Commit backend removal**
 
 ```bash
 git add pyproject.toml uv.lock src/spriteguru e2e
@@ -478,7 +478,7 @@ git commit -m "feat: remove SpritePlay cloud services"
 - Preserves: project gallery, project switcher, character switcher, provider-key settings, spend approvals, builder, review/edit/findings/export screens.
 - Removes: cloud context, account menu, sync UI, remote library route/tab, access lock, publish/import actions, update banners, and cloud project cards.
 
-- [ ] **Step 1: Write a failing local-studio Playwright scenario**
+- [x] **Step 1: Write a failing local-studio Playwright scenario**
 
 Create `e2e/test_19_local_studio.py` using `e2e.apphelp.Engine`. Start a synthetic engine, create/open one local project through `/api/library/projects`, and assert:
 
@@ -498,7 +498,7 @@ assert page.get_by_text("SpritePlay account").count() == 0
 
 Also navigate to Characters and Builder in synthetic mode and assert their create/generate actions are enabled without account state.
 
-- [ ] **Step 2: Run the studio scenario and verify cloud controls are found**
+- [x] **Step 2: Run the studio scenario and verify cloud controls are found**
 
 Run:
 
@@ -508,17 +508,17 @@ uv run pytest e2e/test_19_local_studio.py -n 0 -q
 
 Expected: FAIL because the account chip, sync pill, cloud row, remote Library tab, settings sections, and generation lock still render.
 
-- [ ] **Step 3: Remove cloud providers, routes, API methods, and types**
+- [x] **Step 3: Remove cloud providers, routes, API methods, and types**
 
 Delete `CloudProvider` wrapping in `App.tsx` and delete `lib/cloud.tsx`. Remove cloud/sync API methods, `SyncChoice`, `cloudBlobUrl`, cloud project/status/access/update/sync types, and `ProjectCard.cloud`. Remove the remote `library` screen from router/app navigation while retaining the local `Library` TypeScript interface used by `/api/library`.
 
-- [ ] **Step 4: Simplify the visible screens**
+- [x] **Step 4: Simplify the visible screens**
 
 Remove `AccountChip` and `SyncPill` from `TopBar`; remove the remote Library item from `NavRail`; remove `CloudProjects`, sync badges/menus, update banner, and cloud downloads from `Projects`; remove account and cloud-sync sections from `Settings`; remove remote publish/import actions from Characters/Export. Delete `Account.tsx`, `Sync.tsx`, and `screens/Library.tsx`.
 
 Replace `useGenerationLock()` checks with only existing local constraints (project/character/job readiness). Do not add a new entitlement abstraction.
 
-- [ ] **Step 5: Remove orphaned styles/icons and build the studio**
+- [x] **Step 5: Remove orphaned styles/icons and build the studio**
 
 Use `rg` to identify selectors referenced only by deleted components, then remove those selectors from `app.css` and `screens.css`. Remove remote-library-only icon names when no active component imports them. Run:
 
@@ -530,7 +530,7 @@ npm run build
 
 Expected: both commands exit 0 and Vite writes `src/spriteguru/studio_dist`.
 
-- [ ] **Step 6: Verify the UI scenario and existing studio workflow**
+- [x] **Step 6: Verify the UI scenario and existing studio workflow**
 
 Run:
 
@@ -540,7 +540,7 @@ uv run pytest e2e/test_19_local_studio.py e2e/test_09_studio.py e2e/test_13_proj
 
 Expected: PASS; no cloud UI appears and the local project/studio workflow remains functional.
 
-- [ ] **Step 7: Commit the local-only UI**
+- [x] **Step 7: Commit the local-only UI**
 
 ```bash
 git add studio e2e/test_19_local_studio.py
@@ -576,7 +576,7 @@ git commit -m "feat: make the studio entirely local"
 **Interfaces:**
 - Produces: one Split Cells geometry source, SVG/PNG/ICNS/ICO variants, `SpriteGuru.app`/`SpriteGuru.exe`, bundle ID `com.spriteguru.studio`, Apache-2.0 license files.
 
-- [ ] **Step 1: Change brand tests first**
+- [x] **Step 1: Change brand tests first**
 
 Update `e2e/test_16_brand.py` so the SVG master assertions require:
 
@@ -593,7 +593,7 @@ assert "FFD20A" not in mark_svg
 
 Update launcher/package expectations to `spriteguru.launcher`, `SpriteGuru.icns`, `SpriteGuru.ico`, `SpriteGuru.app`, `SpriteGuru.exe`, and `com.spriteguru.studio`. Keep the existing pixel-diff, 16/32 px, favicon, and launcher fallback checks.
 
-- [ ] **Step 2: Run the brand scenario and verify old geometry/name failures**
+- [x] **Step 2: Run the brand scenario and verify old geometry/name failures**
 
 Run:
 
@@ -603,7 +603,7 @@ uv run pytest e2e/test_16_brand.py -n 0 -q
 
 Expected: FAIL because the mark is still the old black/yellow 5×5 S and packaging still names SpritePlay.
 
-- [ ] **Step 3: Implement Split Cells from one 96-unit source**
+- [x] **Step 3: Implement Split Cells from one 96-unit source**
 
 In `build_brand.py`, define:
 
@@ -620,15 +620,15 @@ ACCENT_BOX = (57, 58, 72, 74)
 
 Generate both mark SVG variants from that exact geometry and render PNG/ICNS/ICO with supersampled Pillow polygons. Keep the approved heavier center. Make the on-dark asset preserve the light tile so the selected mark looks identical on both shells.
 
-- [ ] **Step 4: Regenerate SpriteGuru wordmarks reproducibly**
+- [x] **Step 4: Regenerate SpriteGuru wordmarks reproducibly**
 
 Set `TEXT = "SpriteGuru"` and update all SVG accessibility labels. Make `build_wordmark.py` resolve Unbounded from `studio/node_modules/@fontsource-variable/unbounded`; add that package as a development dependency and refresh `studio/package-lock.json`. Regenerate horizontal and wordmark SVGs, then run `brand/build_brand.py`.
 
-- [ ] **Step 5: Rename desktop packaging and launcher identity**
+- [x] **Step 5: Rename desktop packaging and launcher identity**
 
 Set engine output to `spriteguru-engine`, launcher/app names to `SpriteGuru`, bundle ID to `com.spriteguru.studio`, icon paths to `brand/SpriteGuru.icns`/`.ico`, pywebview title to `SpriteGuru`, and `argparse` program name to `SpriteGuru`. Update `build_app.sh` checks to compare the new bundle name, ID, and icon.
 
-- [ ] **Step 6: Add Apache 2.0 license files**
+- [x] **Step 6: Add Apache 2.0 license files**
 
 Create `LICENSE` with the unmodified Apache License, Version 2.0 text from January 2004. Create `NOTICE` exactly as:
 
@@ -639,7 +639,7 @@ Copyright 2026 Anil Beyazoglu
 This product includes software developed for the SpriteGuru project.
 ```
 
-- [ ] **Step 7: Generate and inspect the mark, then run brand tests**
+- [x] **Step 7: Generate and inspect the mark, then run brand tests**
 
 Run:
 
@@ -652,7 +652,7 @@ uv run pytest e2e/test_16_brand.py -n 0 -q
 
 Open `brand/png/app-icon-macos-512.png`, `brand/png/mark-32.png`, and `brand/png/mark-16.png` for visual inspection. Expected: the original Split Cells shape remains identifiable at both small sizes; test passes.
 
-- [ ] **Step 8: Build and verify the native bundle**
+- [x] **Step 8: Build and verify the native bundle**
 
 Run:
 
@@ -662,7 +662,7 @@ packaging/build_app.sh
 
 Expected on macOS: `dist/SpriteGuru.app`, `CFBundleName=SpriteGuru`, `CFBundleIdentifier=com.spriteguru.studio`, and the bundled icon byte-matches `brand/SpriteGuru.icns`.
 
-- [ ] **Step 9: Commit branding, packaging, and licensing**
+- [x] **Step 9: Commit branding, packaging, and licensing**
 
 ```bash
 git add brand packaging src/spriteguru/launcher.py studio LICENSE NOTICE e2e/test_16_brand.py
@@ -687,7 +687,7 @@ git commit -m "feat: add the SpriteGuru Split Cells brand"
 **Interfaces:**
 - Produces: a README-only path from clone to a running synthetic SpriteGuru studio, complete provider setup, development/testing/build commands, privacy statement, contribution guidance, and Apache license link.
 
-- [ ] **Step 1: Add failing documentation-contract tests**
+- [x] **Step 1: Add failing documentation-contract tests**
 
 Create `e2e/test_26_open_source_docs.py`:
 
@@ -735,7 +735,7 @@ def test_env_example_matches_documented_provider_names():
     ]
 ```
 
-- [ ] **Step 2: Run the docs contract and verify current README failures**
+- [x] **Step 2: Run the docs contract and verify current README failures**
 
 Run:
 
@@ -745,7 +745,7 @@ uv run pytest e2e/test_26_open_source_docs.py -n 0 -q
 
 Expected: FAIL because clone/prerequisites/synthetic smoke setup are incomplete, old commands/cloud docs remain, and `.env.example` differs.
 
-- [ ] **Step 3: Rewrite README as the authoritative first-run guide**
+- [x] **Step 3: Rewrite README as the authoritative first-run guide**
 
 Use this order:
 
@@ -762,15 +762,15 @@ Use this order:
 
 Do not mention account plans, remote sync, cloud library, website login, or updates.
 
-- [ ] **Step 4: Align environment example and contribution docs**
+- [x] **Step 4: Align environment example and contribution docs**
 
 Set `.env.example` to the four canonical provider variables in the test. Add `CONTRIBUTING.md` with local setup linking back to README, red-green-refactor expectations, offline-before-live testing, formatting/typecheck commands, no-credential rules, and a statement that bug reports must not include prompts/assets unless the reporter intends to share them.
 
-- [ ] **Step 5: Clean architecture and failure-mode documentation**
+- [x] **Step 5: Clean architecture and failure-mode documentation**
 
 Delete `docs/cloud-integration-plan.md`. Rename package/product references in `docs/implementation-plan.md` and `notebooks/README.md`. Remove cloud failure modes C1–C12, C14–C40 and the SpritePlay-rename narrative from `docs/failure-modes.md`; preserve unrelated local/provider/pipeline failure modes and add a concise migration section matching Task 2.
 
-- [ ] **Step 6: Protect local/generated data from publication**
+- [x] **Step 6: Protect local/generated data from publication**
 
 Add these entries to `.gitignore`:
 
@@ -782,7 +782,7 @@ src/spriteguru/studio_dist/
 
 Confirm `MyGame.sprites`, visual-companion files, E2E artifacts, `.env`, `dist`, and `build` stay untracked.
 
-- [ ] **Step 7: Run documentation tests and a clean-checkout smoke validation**
+- [x] **Step 7: Run documentation tests and a clean-checkout smoke validation**
 
 Run:
 
@@ -800,7 +800,7 @@ uv run spriteguru --help
 
 Expected: all commands exit 0 without an API key. Remove the explicit temporary clone path after validation.
 
-- [ ] **Step 8: Commit documentation**
+- [x] **Step 8: Commit documentation**
 
 ```bash
 git add README.md CONTRIBUTING.md .env.example .gitignore docs notebooks e2e/test_26_open_source_docs.py
@@ -818,7 +818,7 @@ git commit -m "docs: publish the local-first SpriteGuru guide"
 **Interfaces:**
 - Produces: a clean `main` branch on `origin`, containing the verified open-source app and no local artifacts.
 
-- [ ] **Step 1: Scan active source for forbidden cloud and old-identity residue**
+- [x] **Step 1: Scan active source for forbidden cloud and old-identity residue**
 
 Run:
 
@@ -832,7 +832,7 @@ find src/spriteguru -maxdepth 2 -type d -name cloud -print
 
 Expected: no output. Migration-only old-name strings remain confined to `project.py`, `library.py`, `keys.py`, `env.py`, `main.tsx`, and their migration tests.
 
-- [ ] **Step 2: Verify no cloud dependency or UI residue remains**
+- [x] **Step 2: Verify no cloud dependency or UI residue remains**
 
 Run:
 
@@ -843,7 +843,7 @@ uv run spriteguru --help
 
 Expected: the scan prints only the keychain cleanup constant for `spriteplay-cloud`; CLI help contains no cloud, sync, account, or remote-library command.
 
-- [ ] **Step 3: Run frontend and targeted suites**
+- [x] **Step 3: Run frontend and targeted suites**
 
 Run:
 
@@ -855,7 +855,7 @@ uv run pytest e2e/test_24_rename.py e2e/test_17_local_only.py e2e/test_19_local_
 
 Expected: all commands and tests PASS with no warnings introduced by this work.
 
-- [ ] **Step 4: Run the complete offline E2E suite**
+- [x] **Step 4: Run the complete offline E2E suite**
 
 Run:
 
@@ -865,7 +865,7 @@ uv run pytest e2e
 
 Expected: PASS, with live/provider-spend tests skipped unless `--live` is explicitly supplied. Record any pre-existing/environmental failure by exact test name before making a completion claim.
 
-- [ ] **Step 5: Rebuild the native app and verify repository contents**
+- [x] **Step 5: Rebuild the native app and verify repository contents**
 
 Run:
 
@@ -877,7 +877,7 @@ git ls-files | rg '(^|/)(\.env|MyGame\.sprites|\.superpowers|e2e/artifacts|dist|
 
 Expected: native build succeeds; the tracked-file scan is empty; `git status` shows only the plan checkbox updates or intentional final fixes.
 
-- [ ] **Step 6: Apply the verification-before-completion checklist and commit final fixes**
+- [x] **Step 6: Apply the verification-before-completion checklist and commit final fixes**
 
 Read and execute `superpowers:verification-before-completion`. Re-run any command affected by a fix. Then:
 

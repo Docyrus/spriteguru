@@ -52,13 +52,12 @@ def test_closing_the_studio_stops_the_engine_promptly_and_quietly(tmp_path):
         url = f"ws://127.0.0.1:{port}/api/events?token=t0k"
         with connect(url):
             pass  # a window that was closed
-        studio = connect(url)  # the window being closed now
-        time.sleep(1.5)
-        started = time.monotonic()
-        proc.send_signal(signal.SIGTERM)
-        proc.wait(timeout=10)
-        took = time.monotonic() - started
-        studio.close()
+        with connect(url):  # the window being closed now
+            time.sleep(1.5)
+            started = time.monotonic()
+            proc.send_signal(signal.SIGTERM)
+            proc.wait(timeout=10)
+            took = time.monotonic() - started
     finally:
         if proc.poll() is None:
             proc.kill()
