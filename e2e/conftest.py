@@ -82,7 +82,13 @@ def pytest_configure_node(node):
 def pytest_sessionfinish(session, exitstatus):
     if _is_worker(session.config) or session.config.option.collectonly:
         return
-    write_artifact(ART_ROOT / session.config.option.run_id, session.config)
+    summary = write_artifact(ART_ROOT / session.config.option.run_id, session.config)
+    # A recorded check that fails fails the run, even when its scenario asserted nothing.
+    failing = [f"{c['scenario']}: {c['check']}" for c in summary["checks"] if not c["pass"]]
+    if failing:
+        print("\nfailing checks in the artifact:\n  " + "\n  ".join(failing), file=sys.stderr)
+        if session.exitstatus == pytest.ExitCode.OK:
+            session.exitstatus = pytest.ExitCode.TESTS_FAILED
 
 
 def free_port() -> int:
@@ -216,7 +222,7 @@ def sk(*args: str, cwd: Path | None = None, env: dict | None = None, check: bool
     return {"code": p.returncode, "json": data, "stdout": p.stdout, "stderr": p.stderr}
 
 
-def write_artifact(run_dir: Path, config) -> None:
+def write_artifact(run_dir: Path, config) -> dict:
     """Merge every worker's part into the run's summary, digest and index."""
     r = Recorder(run_dir)
     for part in sorted((run_dir / "parts").glob("*.json")):
@@ -252,6 +258,7 @@ def write_artifact(run_dir: Path, config) -> None:
         latest.symlink_to(r.run_dir.name)
     except OSError:
         pass
+    return summary
 
 
 def _html(s: dict) -> str:

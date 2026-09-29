@@ -207,12 +207,13 @@ def test_project_library(rec, work):
     finally:
         _stop(srv)
 
-    # P11: the old single-project launcher's last project shows as a recent project
+    # P11: the old single-project launcher's last project shows as a recent project. That launcher
+    # predates both renames, so its state keeps the engine's old name: ~/.config/spritekit/.
     home = work / "projects" / "home"
-    (home / ".config" / "spriteguru").mkdir(parents=True)
+    (home / ".config" / "spritekit").mkdir(parents=True)
     legacy = work / "projects" / "Legacy.sprites"
     sk("init", str(legacy), "--mode", "synthetic")
-    (home / ".config" / "spriteguru" / "last_project").write_text(str(legacy))
+    (home / ".config" / "spritekit" / "last_project").write_text(str(legacy))
     srv = _start(port, {"HOME": str(home)}, unset=("SPRITEGURU_LIBRARY",))
     try:
         with _client(port) as c:
