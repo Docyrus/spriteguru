@@ -23,11 +23,7 @@ keys_app = typer.Typer(help="API keys in the OS keychain (env vars override).", 
 char_app = typer.Typer(help="Characters and turnarounds (6.4).", no_args_is_help=True)
 eval_app = typer.Typer(help="Evaluation harness (16).", no_args_is_help=True)
 jobs_app = typer.Typer(help="Job history and resume (5).", no_args_is_help=True)
-library_app = typer.Typer(help="The asset library in your cloud workspaces.", no_args_is_help=True)
-cloud_app = typer.Typer(help="Your SpriteGuru account: sign-in, access and machines.", no_args_is_help=True)
 app.add_typer(keys_app, name="keys")
-app.add_typer(cloud_app, name="cloud")
-app.add_typer(library_app, name="library")
 app.add_typer(char_app, name="character")
 app.add_typer(eval_app, name="eval")
 app.add_typer(jobs_app, name="jobs")
@@ -43,26 +39,6 @@ def _project(path: Optional[Path]) -> Project:
     except ProjectError as e:
         con.print(f"[red]{e}[/red]")
         raise typer.Exit(2)
-
-
-def _require_access(mode: Optional[str], proj: Optional[Project] = None) -> None:
-    """Commands that call providers need the account's access (cloud plan 4.4); without it they exit
-    with code 3 and the server's reason. Synthetic mode is free and needs none."""
-    from .cloud.access import AccessRequired, require
-    from .cloud.client import Session
-
-    effective = mode or (proj.config.settings.provider_mode if proj else "live")
-    if effective == "synthetic":
-        return
-    session = Session()
-    try:
-        require(session, effective)
-    except AccessRequired as e:
-        con.print(f"[red]{e.decision['message']}[/red]")
-        print(json.dumps({"error": e.payload()}))
-        raise typer.Exit(3)
-    finally:
-        session.close()
 
 
 def _approver(yes: bool):
@@ -162,7 +138,6 @@ def character_new(name: str, describe: Optional[str] = typer.Option(None, "--des
     if not describe and not image:
         con.print("[red]give --describe, --image, or both[/red]")
         raise typer.Exit(2)
-    _require_access(mode, proj)
     try:
         ch.new_record(proj, name, describe or "", mirrorable=mirrorable, kind=kind, blend=blend,
                       image=image.read_bytes() if image else None)
@@ -229,8 +204,6 @@ def gen(character: str, action: str, facing: str = typer.Option("E"), frames: Op
     if not rec.approved:
         con.print(f"[red]character {character!r} is not approved[/red]; run `spriteguru character approve {character}`")
         raise typer.Exit(2)
-    if not replay:  # replay reads cached candidates only and never calls a provider
-        _require_access(mode, proj)
     anim_id, spec = service.create_animation(proj, character, action, facing=facing, frames=frames, loop=loop,
                                              view=view, motion=motion)
 
@@ -308,7 +281,6 @@ def repair(anim_id: str, frame: int = typer.Option(..., help="1-based frame numb
     from .manual import manual_repair
 
     proj = _project(project)
-    _require_access(mode, proj)
 
     async def main():
         runner = make_runner(proj, mode=mode, approve=_approver(yes))
@@ -329,7 +301,6 @@ def inbetween(anim_id: str, after: int = typer.Option(..., help="insert after th
     from .manual import manual_inbetween
 
     proj = _project(project)
-    _require_access(mode, proj)
 
     async def main():
         runner = make_runner(proj, mode=mode, approve=_approver(yes))
@@ -483,7 +454,6 @@ def eval_gen(root: Path = typer.Option(Path("e2e/work/genset"), help="folder for
     if mode == "live" and not yes:
         con.print("[red]the live generation set spends money; pass --yes[/red]")
         raise typer.Exit(2)
-    _require_access(mode)
     out = out or Path("e2e/artifacts/eval-gen") / dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     doc = genset.run(root, out, mode=mode, limit=limit, workers=workers)
     store.record(out / "eval.sqlite", doc, label=f"gen:{mode}", kind="generation")
@@ -494,210 +464,6 @@ def eval_gen(root: Path = typer.Option(Path("e2e/work/genset"), help="folder for
     print(json.dumps({"summary": doc["summary"], "digest": doc["digest"], "out": str(out), "gate": verdict}))
     if verdict is not None and not verdict["pass"]:
         raise typer.Exit(1)
-
-
-# -- cloud account (cloud plan 3) -------------------------------------------------------------
-
-
-@cloud_app.command("login")
-def cloud_login(no_browser: bool = typer.Option(False, "--no-browser", help="print the sign-in link only"),
-                timeout: float = typer.Option(600.0, help="seconds to wait for the browser")):
-    """Sign in through the browser. A one-shot listener on 127.0.0.1 receives the callback (C3)."""
-    from .cloud.auth import loopback_login
-    from .cloud.client import Session
-    from .cloud.service import CloudService
-
-    session = Session()
-
-    def announce(url: str) -> None:
-        con.print(f"Sign in to SpriteGuru in your browser. If it did not open, visit:\n{url}")
-        print(json.dumps({"authorize_url": url}), flush=True)
-
-    result = loopback_login(session, open_browser=not no_browser, timeout=timeout, announce=announce)
-    if result != "signed-in":
-        con.print(f"[red]sign-in {result}[/red]")
-        print(json.dumps({"signed_in": False, "result": result}))
-        raise typer.Exit(1)
-    st = CloudService(lambda e: None, session).status(refresh=True)
-    con.print(f"[green]signed in[/green] as {st['user'].get('email')} on {st['machine']['name']}")
-    print(json.dumps(st))
-
-
-@cloud_app.command("logout")
-def cloud_logout():
-    """Sign this machine out: revoke the sign-in on the server and forget it here."""
-    from .cloud.auth import sign_out
-    from .cloud.client import Session
-
-    session = Session()
-    was = session.signed_in
-    sign_out(session)
-    print(json.dumps({"signed_in": False, "was_signed_in": was}))
-
-
-@cloud_app.command("status")
-def cloud_status(refresh: bool = typer.Option(False, help="ask the server now instead of the cached answer")):
-    """The account, this machine and the access object (never a token)."""
-    from .cloud.service import CloudService
-
-    print(json.dumps(CloudService(lambda e: None).status(refresh=refresh)))
-
-
-@cloud_app.command("machines")
-def cloud_machines(rename: Optional[str] = typer.Option(None, help="rename this machine"),
-                   sign_out: Optional[str] = typer.Option(None, "--sign-out", help="sign out a machine by id")):
-    """List the account's machines; rename this one or sign one out."""
-    from .cloud.client import CloudError
-    from .cloud.service import CloudService
-
-    svc = CloudService(lambda e: None)
-    try:
-        if rename:
-            svc.rename_machine(rename)
-        if sign_out:
-            svc.session.request("DELETE", f"/api/v1/devices/{sign_out}")
-        print(json.dumps(svc.session.get("/api/v1/devices")))
-    except CloudError as e:
-        con.print(f"[red]{e.message}[/red]")
-        print(json.dumps({"error": e.payload()}))
-        raise typer.Exit(1)
-
-
-@cloud_app.command("projects")
-def cloud_projects():
-    """Cloud projects in every workspace you belong to, with the folder they sync to on this machine."""
-    from . import library
-    from .cloud.client import CloudError, Session
-
-    try:
-        rows = Session().get("/api/v1/projects")["projects"]
-    except CloudError as e:
-        con.print(f"[red]{e.message}[/red]")
-        print(json.dumps({"error": e.payload()}))
-        raise typer.Exit(1)
-    here = library.cloud_links()
-    print(json.dumps({"projects": [{**r, "local_path": here.get(r["id"])} for r in rows]}))
-
-
-@cloud_app.command("download")
-def cloud_download(project_id: str, to: Optional[Path] = typer.Option(None, "--to", help="parent folder (default: the library)")):
-    """Put a cloud project on this machine in a new folder (never merged into an existing one)."""
-    from . import library
-    from .cloud.client import CloudError, Session
-    from .cloud.sync import SyncPaused, download_project
-
-    session = Session()
-    try:
-        project = session.get(f"/api/v1/projects/{project_id}")["project"]
-        target = download_project(session, project, (to or library.root()).expanduser())
-    except (CloudError, SyncPaused) as e:
-        con.print(f"[red]{e.message}[/red]")
-        print(json.dumps({"error": e.payload()}))
-        raise typer.Exit(1)
-    library.touch(target)
-    con.print(f"[green]downloaded[/green] {project['name']} to {target}")
-    print(json.dumps({"path": str(target), "project_id": project_id}))
-
-
-def _library_call(fn, *args, **kw):
-    from .cloud import library as cloud_library
-    from .cloud.client import CloudError
-    from .cloud.sync import SyncPaused
-
-    try:
-        return fn(*args, **kw)
-    except (CloudError, SyncPaused, cloud_library.LibraryError) as e:
-        msg = getattr(e, "message", str(e))
-        con.print(f"[red]{msg}[/red]")
-        print(json.dumps({"error": e.payload() if hasattr(e, "payload") else {"code": "bad_request", "message": msg}}))
-        raise typer.Exit(1)
-
-
-@library_app.command("list")
-def library_list(owner: Optional[str] = typer.Option(None, help="me or a team id (default: every workspace)"),
-                 kind: Optional[str] = None, q: Optional[str] = typer.Option(None, "--search", "-q")):
-    """Library items in your workspaces."""
-    from .cloud import library as cloud_library
-    from .cloud.client import Session
-
-    print(json.dumps({"items": _library_call(cloud_library.browse, Session(), owner, kind, q)}))
-
-
-@library_app.command("import")
-def library_import(item_id: str, project: Optional[Path] = ProjectOpt):
-    """Import a library item into the project (characters/, animations/ or imports/)."""
-    from .cloud import library as cloud_library
-    from .cloud.client import Session
-
-    proj = _project(project)
-    res = _library_call(cloud_library.import_item, Session(), proj.root, item_id)
-    con.print(f"[green]imported[/green] {res['name']} into {res['path']}")
-    print(json.dumps(res))
-
-
-@library_app.command("publish")
-def library_publish(prefix: str, name: str = typer.Option(..., "--name"), kind: str = typer.Option(..., "--kind"),
-                    owner: Optional[str] = typer.Option(None, help="me or a team id (default: the project's workspace)"),
-                    project: Optional[Path] = ProjectOpt):
-    """Publish a project folder (e.g. characters/knight/) as a library item."""
-    from .cloud import library as cloud_library
-    from .cloud.client import Session
-
-    proj = _project(project)
-    res = _library_call(cloud_library.publish, Session(), proj.root, prefix, name=name, kind=kind, owner=owner)
-    con.print(f"[green]published[/green] {name}" + (" (from the synced project)" if res["from_project"] else ""))
-    print(json.dumps(res))
-
-
-@app.command()
-def sync(push_only: bool = typer.Option(False, "--push", help="push only"),
-         pull_only: bool = typer.Option(False, "--pull", help="pull only"),
-         link: Optional[str] = typer.Option(None, "--link", help="link to a workspace first: me or a team id"),
-         unlink: bool = typer.Option(False, "--unlink", help="stop syncing; the cloud copy stays"),
-         keep: Optional[bool] = typer.Option(None, "--keep-link/--separate",
-                                             help="a copied folder: keep syncing it here, or make it separate"),
-         resolve: Optional[list[str]] = typer.Option(None, "--resolve", help="PATH=mine or PATH=theirs (repeatable)"),
-         wait: float = typer.Option(30.0, help="seconds to wait while another window syncs this project"),
-         project: Optional[Path] = ProjectOpt):
-    """Sync the project with the cloud: pull what changed, push what changed here (cloud plan 6)."""
-    from .cloud.client import CloudError, Session
-    from .cloud.sync import SyncBusy, SyncPaused, Syncer
-
-    proj = _project(project)
-    syncer = Syncer(proj.root, Session(), lock_wait=wait)
-    try:
-        if unlink or keep is False:
-            syncer.unlink()
-            print(json.dumps({"linked": False}))
-            return
-        if link:
-            made = syncer.link(link)
-            con.print(f"[green]linked[/green] {made['name']} ({made['id']})")
-        if keep:
-            syncer.keep_link()
-        if resolve:
-            choices = []
-            for r in resolve:
-                path, _, keep_side = r.rpartition("=")
-                choices.append({"path": path, "keep": keep_side})
-            syncer.resolve(choices)
-        res = syncer.run(push=not pull_only, pull=not push_only)
-    except SyncBusy as e:
-        con.print(f"[yellow]{e}[/yellow]")
-        print(json.dumps({"error": {"code": "busy", "message": str(e)}}))
-        raise typer.Exit(4)
-    except SyncPaused as e:
-        con.print(f"[yellow]{e.message}[/yellow]")
-        print(json.dumps({"error": e.payload(), "status": syncer.status()}))
-        raise typer.Exit(5)
-    except (CloudError, ValueError) as e:
-        msg = getattr(e, "message", str(e))
-        con.print(f"[red]{msg}[/red]")
-        print(json.dumps({"error": e.payload() if isinstance(e, CloudError) else {"code": "bad_request", "message": msg}}))
-        raise typer.Exit(1)
-    con.print(f"rev {res['rev']}: pushed {len(res['pushed'])}, pulled {len(res['pulled'])}"
-              + (f", {res['conflicts']} conflicts" if res["conflicts"] else ""))
-    print(json.dumps({**res, "status": syncer.status()}))
 
 
 @app.command()

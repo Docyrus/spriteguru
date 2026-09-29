@@ -18,6 +18,7 @@ from fastapi import Body, FastAPI, HTTPException, Request, WebSocket, WebSocketD
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel
+from starlette.routing import Match
 
 from . import __version__, choreo, edits, embed, keys, registry, service
 from . import character as char_mod
@@ -89,10 +90,6 @@ class State:
         self.tasks: dict[str, asyncio.Task] = {}
         self.port = 0
         self.stopping = False
-        from .cloud.service import CloudService
-
-        self.cloud = CloudService(self.bus.publish)
-        self.sync = None  # the open project's sync scheduler (cloud plan 6.8), started on the event loop
         if project is not None:
             self.attach(project)
 
@@ -113,50 +110,6 @@ class State:
                 return name.replace(":", " for ")
         return None
 
-    def busy_prefixes(self) -> set[str]:
-        """Folders a running job or turnaround is writing: sync neither pushes nor pulls them (6.4, C30)."""
-        from .project import slug
-
-        out: set[str] = set()
-        try:
-            if self.runner is not None:
-                for h in list(self.runner.jobs.values()):
-                    if h.task is not None and not h.task.done() and h.state.anim_id:
-                        out.add(f"animations/{h.state.anim_id}/")
-            for name, t in list(self.tasks.items()):
-                if not t.done() and name.startswith("turnaround:"):
-                    out.add(f"characters/{slug(name.split(':', 1)[1])}/")
-        except RuntimeError:  # the job table changed while it was read: be safe for this round
-            out.add("animations/")
-        return out
-
-    async def start_sync(self) -> None:
-        from .cloud.scheduler import ProjectSync
-
-        await self.stop_sync()
-        if self.project is None:
-            return
-
-        async def pulled(paths: list[str]) -> None:
-            # the studio refreshes pulled animations the way it does after an export (C30)
-            for anim in sorted({p.split("/")[1] for p in paths if p.startswith("animations/") and "/final/" in p}):
-                self.bus.publish({"type": "exported", "anim": anim, "source": "sync"})
-            if "project.json" in paths and self.project is not None:  # settings came from another machine
-                fresh = Project.open(self.project.root).config
-                self.project.config = fresh
-                if self.runner is not None:
-                    self.runner.project.config = fresh
-                    self.runner.hub.session_cap = fresh.settings.session_cap_usd
-                    self.runner.hub.job_cap = fresh.settings.job_cap_usd
-
-        self.sync = ProjectSync(self.project.root, self.cloud, self.bus, self.busy_prefixes, pulled)
-        self.sync.start()
-
-    async def stop_sync(self) -> None:
-        if self.sync is not None:
-            await self.sync.stop()
-            self.sync = None
-
     def rebuild_runner(self) -> None:
         old = self.runner
         self.runner = make_runner(self.project, mode=self.mode, bus=self.bus)
@@ -164,8 +117,8 @@ class State:
             self.runner.jobs.update(old.jobs)
 
 
-# project-free endpoints: the gallery, keys, models and the account work before any project is open (P1)
-_OPEN_PREFIXES = ("/api/library", "/api/keys", "/api/models", "/api/cloud")
+# Project-free endpoints work before any project is open (P1).
+_OPEN_PREFIXES = ("/api/library", "/api/keys", "/api/models")
 
 
 def create_app(project: Project | None, token: str, *, mode: str | None = None) -> FastAPI:
@@ -186,34 +139,21 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
             if not tok or not secrets.compare_digest(tok, S.token):
                 return JSONResponse({"detail": "missing or invalid token"}, status_code=401)
             if S.project is None and not path.startswith(_OPEN_PREFIXES):
+                registered = any(
+                    getattr(route, "path", "").startswith("/api/")
+                    and getattr(route, "path", "") != "/api/{path:path}"
+                    and route.matches(request.scope)[0] is Match.FULL
+                    for route in app.router.routes
+                )
+                if not registered:
+                    return JSONResponse({"detail": "not found"}, status_code=404)
                 return JSONResponse({"detail": "no project open"}, status_code=409)
         return await call_next(request)
-
-    from .cloud.access import AccessRequired
-    from .cloud.client import CloudError
-
-    @app.exception_handler(AccessRequired)
-    async def _no_access(request: Request, e: AccessRequired):
-        # 402 with the server's reason; `detail` keeps the studio's existing error display working
-        return JSONResponse({"detail": e.decision["message"], "error": e.payload()}, status_code=402)
-
-    @app.exception_handler(CloudError)
-    async def _cloud_error(request: Request, e: CloudError):
-        # a cloud 401 is the account's, not the studio's launch token: the studio reads 401 as the latter
-        status = 403 if e.status == 401 else e.status if 400 <= e.status < 600 else 503
-        if e.status in (402, 413):
-            S.cloud.invalidate_me()
-        return JSONResponse({"detail": e.message, "error": e.payload()}, status_code=status)
-
-    async def _require_access() -> None:
-        """Before anything that calls a provider or starts a job (cloud plan 4.4); synthetic mode is free."""
-        await asyncio.to_thread(S.cloud.require, S.runner.hub.mode if S.runner is not None else S.mode)
 
     @app.on_event("startup")
     async def _resume():
         if S.runner is not None:
             await S.runner.resume_unfinished()
-        await S.start_sync()
 
     @app.on_event("shutdown")
     async def _stop():
@@ -268,13 +208,11 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
         if busy:
             raise HTTPException(409, f"{busy} is still running in {S.project.config.name}; "
                                      "wait for it or cancel it before switching projects")
-        await S.stop_sync()  # P5: the old project's syncing ends with its runner
         S.attach(project)
         S.bus.history.clear()  # a studio connecting later must not replay the old project's events
         if project is not None:
             lib.touch(project.root)
             await S.runner.resume_unfinished()
-            await S.start_sync()
         S.bus.publish({"type": "project_changed", "path": str(project.root) if project else None,
                        "name": project.config.name if project else None})
 
@@ -439,7 +377,6 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
             raise HTTPException(400, f"unknown kind {body.kind!r}")
         if (S.project.character_dir(body.name) / "character.json").is_file():
             raise HTTPException(409, f"a subject named {body.name!r} already exists")
-        await _require_access()
         try:
             rec = char_mod.new_record(S.project, body.name, body.description, body.style, body.mirrorable,
                                       kind=body.kind, blend=body.blend, image=_decode_image(body.image))
@@ -466,8 +403,6 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
             rec = S.project.character(name)
         except ProjectError as e:
             raise HTTPException(404, str(e))
-        if use_image_as_view:
-            await _require_access()
         try:
             img = char_mod.normalize_image(_decode_image(image))
         except ValueError as e:
@@ -485,7 +420,6 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
     @app.post("/api/characters/{name}/turnaround")
     async def regenerate_turnaround(name: str, n: int = Body(1, embed=True), seed: int = Body(0, embed=True)):
         S.project.character(name)
-        await _require_access()
         S.tasks[f"turnaround:{name}"] = asyncio.create_task(_turnaround(name, n, seed))
         return {"started": True}
 
@@ -561,7 +495,6 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
 
     @app.post("/api/animations/{anim_id}/jobs")
     async def start_job(anim_id: str, seed: int = Body(0, embed=True)):
-        await _require_access()
         st = S.runner.create_animation_job(anim_id, seed=seed)
         S.runner.start(st.id)
         return st.model_dump(mode="json")
@@ -588,8 +521,6 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
     async def repair(anim_id: str, frame: int = Body(..., embed=True), kind: str = Body("pose", embed=True),
                      note: str | None = Body(None, embed=True), job: str | None = Body(None, embed=True)):
         from .manual import manual_repair
-
-        await _require_access()
         try:
             res = await manual_repair(S.runner, anim_id, frame, kind=kind, note=note, job_id=job)
         except ValueError as e:
@@ -648,8 +579,6 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
     @app.post("/api/animations/{anim_id}/inbetween")
     async def inbetween(anim_id: str, after: int = Body(..., embed=True), job: str | None = Body(None, embed=True)):
         from .manual import manual_inbetween
-
-        await _require_access()
         try:
             res = await manual_inbetween(S.runner, anim_id, after, job_id=job)
         except ValueError as e:
@@ -823,258 +752,14 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
             except Exception:
                 pass
 
-    # -- cloud account (cloud plan 3, 4, 5) --------------------------------------------------------
+    @app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+                   include_in_schema=False)
+    def unknown_api(path: str):
+        raise HTTPException(404, "not found")
 
-    def _redirect_uri() -> str:
-        return f"http://127.0.0.1:{S.port}/auth/callback"
-
-    @app.get("/api/cloud/status")
-    async def cloud_status(refresh: bool = False):
-        return await asyncio.to_thread(S.cloud.status, refresh=refresh)
-
-    @app.post("/api/cloud/access/refresh")
-    async def cloud_access_refresh():
-        """Re-check access now, after buying in the browser or when the window regains focus (C36)."""
-        return await asyncio.to_thread(S.cloud.access, True)
-
-    @app.post("/api/cloud/sign-in")
-    async def cloud_sign_in():
-        """Start a PKCE sign-in; the studio opens `authorize_url` in the browser (and again on request, C1)."""
-        if not S.port:
-            raise HTTPException(503, "the engine does not know its port yet")
-        return await asyncio.to_thread(S.cloud.start_sign_in, _redirect_uri())
-
-    @app.post("/api/cloud/sign-in/cancel")
-    def cloud_sign_in_cancel():
-        S.cloud.signin.cancel()
-        return {"ok": True}
-
-    @app.post("/api/cloud/sign-out")
-    async def cloud_sign_out():
-        await asyncio.to_thread(S.cloud.sign_out)
-        return {"signed_in": False}
-
-    @app.patch("/api/cloud/machine")
-    async def cloud_machine(name: str = Body(..., embed=True)):
-        try:
-            return await asyncio.to_thread(S.cloud.rename_machine, name)
-        except ValueError as e:
-            raise HTTPException(400, str(e))
-
-    # -- project sync (cloud plan 6) -----------------------------------------------------------------
-
-    from .cloud.client import Offline as _Offline, SignedOut as _SignedOut
-    from .cloud.sync import SyncBusy, SyncPaused
-
-    @app.exception_handler(SyncPaused)
-    async def _sync_paused(request: Request, e: SyncPaused):
-        if e.code in ("plan_required", "team_inactive", "quota_exceeded", "project_limit", "file_too_large"):
-            S.cloud.invalidate_me()
-        return JSONResponse({"detail": e.message, "error": e.payload()}, status_code=409)
-
-    @app.exception_handler(SyncBusy)
-    async def _sync_busy(request: Request, e: SyncBusy):
-        return JSONResponse({"detail": str(e), "error": {"code": "busy", "message": str(e)}}, status_code=409)
-
-    def _sync():
-        if S.sync is None:
-            raise HTTPException(409, "no project open")
-        return S.sync
-
-    def _workspace_name(owner: str | None) -> str | None:
-        me = S.cloud._me or {}
-        if not owner:
-            return None
-        if owner == (me.get("personal") or {}).get("id") or owner == (me.get("user") or {}).get("id"):
-            return "Personal"
-        return next((t["name"] for t in me.get("teams", []) if t["id"] == owner), None)
-
-    @app.get("/api/project/sync")
-    async def project_sync():
-        st = await asyncio.to_thread(_sync().status)
-        if st.get("linked"):
-            await asyncio.to_thread(S.cloud.me)
-            name = _workspace_name(st["owner_id"])
-            if name is None:  # a workspace the cached account doesn't know yet (moved to a team, C23)
-                await asyncio.to_thread(S.cloud.me, True)
-                name = _workspace_name(st["owner_id"])
-            st["workspace"] = name
-        return st
-
-    @app.post("/api/project/sync/link")
-    async def project_sync_link(owner: str = Body("me", embed=True)):
-        sync = _sync()
-        made = await sync.exclusive(sync.syncer.link, owner)
-        try:
-            await sync.run()
-        except (SyncPaused, _Offline):
-            pass  # the link stands; the project shows why the first push waits
-        return {"project": made, "sync": await asyncio.to_thread(sync.status)}
-
-    @app.post("/api/project/sync/unlink")
-    async def project_sync_unlink():
-        sync = _sync()
-        await sync.exclusive(sync.syncer.unlink)
-        S.bus.publish({"type": "sync_unlinked"})
-        return {"linked": False}
-
-    @app.post("/api/project/sync/now")
-    async def project_sync_now(push: bool = Body(True, embed=True), pull: bool = Body(True, embed=True)):
-        return await _sync().run(push=push, pull=pull)
-
-    @app.post("/api/project/sync/resolve")
-    async def project_sync_resolve(choices: list[dict] = Body(..., embed=True)):
-        sync = _sync()
-        try:
-            res = await sync.exclusive(sync.syncer.resolve, choices)
-        except ValueError as e:
-            raise HTTPException(400, str(e))
-        if res["open"] == 0:
-            S.bus.publish({"type": "sync_conflict", "groups": []})
-        return res
-
-    @app.post("/api/project/sync/copied")
-    async def project_sync_copied(keep: bool = Body(..., embed=True)):
-        """C29: keep syncing this copied folder here, or make it a separate project (the link goes)."""
-        sync = _sync()
-        await sync.exclusive(sync.syncer.keep_link if keep else sync.syncer.unlink)
-        if keep:
-            try:
-                await sync.run()
-            except (SyncPaused, _Offline):
-                pass
-        return await asyncio.to_thread(sync.status)
-
-    @app.put("/api/cloud/auto-sync")
-    def cloud_auto_sync(on: bool = Body(..., embed=True)):
-        lib.set_state(auto_sync=on)
-        if on and S.sync is not None:
-            S.sync.poke()
-        return {"auto": on}
-
-    @app.get("/api/cloud/projects")
-    async def cloud_projects():
-        """Cloud projects across workspaces, each marked with its local folder when it's on this machine."""
-        rows = (await asyncio.to_thread(S.cloud.session.get, "/api/v1/projects"))["projects"]
-        here = await asyncio.to_thread(lib.cloud_links)
-        return {"projects": [{**r, "local_path": here.get(r["id"])} for r in rows]}
-
-    @app.get("/api/cloud/blob/{owner}/{sha}")
-    async def cloud_blob(owner: str, sha: str):
-        """Thumbnails and conflict previews: an <img> can't send the bearer token, so the engine fetches
-        the file, verifies its hash and keeps it on disk (cloud plan 3)."""
-        import re
-
-        if not re.fullmatch(r"[a-f0-9]{64}", sha) or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", owner):
-            raise HTTPException(400, "bad blob reference")
-        cache = lib.root() / ".spriteplay-cache" / "blobs"
-        path = cache / sha
-        if not path.is_file():
-            def fetch() -> None:
-                import hashlib
-
-                cache.mkdir(parents=True, exist_ok=True)
-                tmp = cache / f"{sha}.part"
-                h = hashlib.sha256()
-                with S.cloud.session.stream("GET", f"/api/v1/blobs/{sha}", params={"owner": owner}) as r, \
-                        open(tmp, "wb") as fh:
-                    for chunk in r.iter_bytes(1 << 20):
-                        h.update(chunk)
-                        fh.write(chunk)
-                if h.hexdigest() != sha:
-                    tmp.unlink(missing_ok=True)
-                    raise HTTPException(502, "the cloud file did not match its hash")
-                os.replace(tmp, path)
-
-            await asyncio.to_thread(fetch)
-        head = path.read_bytes()[:12]
-        media = ("image/png" if head.startswith(b"\x89PNG") else "image/gif" if head.startswith(b"GIF8") else
-                 "image/jpeg" if head.startswith(b"\xff\xd8") else "image/webp" if head[8:12] == b"WEBP" else
-                 "application/json" if head.lstrip()[:1] in (b"{", b"[") else "application/octet-stream")
-        return FileResponse(path, media_type=media, headers={"Cache-Control": "private, max-age=31536000, immutable"})
-
-    _downloads: dict[str, bool] = {}
-
-    @app.post("/api/cloud/projects/{pid}/download")
-    async def cloud_download(pid: str, location: str | None = Body(None, embed=True),
-                             open_after: bool = Body(True, embed=True)):
-        """Download a cloud project into a new folder (6.9), then open it."""
-        from .cloud.sync import download_project
-
-        project = (await asyncio.to_thread(S.cloud.session.get, f"/api/v1/projects/{pid}"))["project"]
-        parent = Path(location).expanduser() if location else lib.root()
-        if not parent.is_dir():
-            raise HTTPException(400, f"location {parent} is not a folder")
-        _downloads[pid] = False
-        try:
-            target = await asyncio.to_thread(download_project, S.cloud.session, project, parent,
-                                             publish=S.bus.publish, cancelled=lambda: _downloads.get(pid, False))
-        finally:
-            _downloads.pop(pid, None)
-        lib.touch(target)
-        opened = False
-        if open_after and not S.busy():
-            await _switch(Project.open(target))
-            opened = True
-        return {"path": str(target), "opened": opened, "card": lib.card(target, S.project.root if S.project else None)}
-
-    @app.post("/api/cloud/projects/{pid}/download/cancel")
-    def cloud_download_cancel(pid: str):
-        if pid in _downloads:
-            _downloads[pid] = True
-        return {"cancelling": pid in _downloads}
-
-    # -- asset library (cloud plan 8) ------------------------------------------------------------------
-
-    from .cloud import library as cloud_library
-
-    @app.get("/api/cloud/library")
-    async def cloud_library_list(owner: str | None = None, kind: str | None = None, q: str | None = None):
-        return {"items": await asyncio.to_thread(cloud_library.browse, S.cloud.session, owner, kind, q)}
-
-    @app.get("/api/cloud/library/{item_id}")
-    async def cloud_library_item(item_id: str):
-        return await asyncio.to_thread(cloud_library.item, S.cloud.session, item_id)
-
-    @app.post("/api/cloud/library/{item_id}/import")
-    async def cloud_library_import(item_id: str):
-        """Import an item into the open project; a linked project pushes it on the next round."""
-        if S.project is None:
-            raise HTTPException(409, "no project open")
-        run = lambda: cloud_library.import_item(S.cloud.session, S.project.root, item_id)  # noqa: E731
-        try:
-            res = await (S.sync.exclusive(run) if S.sync is not None else asyncio.to_thread(run))
-        except cloud_library.LibraryError as e:
-            raise HTTPException(400, str(e))
-        S.bus.publish({"type": "project_files_changed", "paths": res["paths"]})
-        S.bus.publish({"type": "library_imported", "item": item_id, "path": res["path"]})
-        return res
-
-    @app.post("/api/project/library/publish")
-    async def project_library_publish(prefix: str = Body(..., embed=True), name: str = Body(..., embed=True),
-                                      kind: str = Body(..., embed=True), owner: str | None = Body(None, embed=True),
-                                      description: str | None = Body(None, embed=True)):
-        run = lambda: cloud_library.publish(S.cloud.session, S.project.root, prefix, name=name, kind=kind,  # noqa: E731
-                                            owner=owner, description=description)
-        try:
-            return await (S.sync.exclusive(run) if S.sync is not None else asyncio.to_thread(run))
-        except cloud_library.LibraryError as e:
-            raise HTTPException(400, str(e))
-
-    @app.get("/auth/callback", include_in_schema=False)
-    async def auth_callback(request: Request):
-        """The browser's return from sign-in (outside /api/, so the launch token does not apply). It does
-        nothing unless `state` matches the pending sign-in (C2), answers only with a redirect or a short
-        page, and logs nothing from the query."""
-        from fastapi.responses import RedirectResponse
-
-        from .cloud.auth import INVALID_PAGE, browser_redirect
-
-        params = {k: v for k, v in request.query_params.items() if k in ("code", "state", "iss", "error")}
-        result = await asyncio.to_thread(S.cloud.complete_sign_in, params)
-        if result == "invalid":
-            return HTMLResponse(INVALID_PAGE, status_code=400)
-        return RedirectResponse(browser_redirect(S.cloud.session.base, result), status_code=302)
+    @app.api_route("/auth/{path:path}", methods=["GET", "POST"], include_in_schema=False)
+    def unknown_auth(path: str):
+        raise HTTPException(404, "not found")
 
     # -- studio ----------------------------------------------------------------------------------
 

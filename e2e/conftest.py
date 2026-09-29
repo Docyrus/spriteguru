@@ -37,10 +37,6 @@ def pytest_addoption(parser):
     parser.addoption("--run-id", default=None, help="artifact folder name")
     parser.addoption("--quick", action="store_true",
                      help="skip the full evaluation matrices (generation set, pixel benchmark) for a fast loop")
-    parser.addoption("--cloud-url", default=None,
-                     help="run the cloud contract scenarios against a spriteguru-web dev server (never production)")
-    parser.addoption("--cloud-log", default=None,
-                     help="that dev server's console log, where it prints verification emails (fresh test accounts)")
 
 
 def _is_worker(config) -> bool:
@@ -50,7 +46,6 @@ def _is_worker(config) -> bool:
 def pytest_configure(config):
     config.addinivalue_line("markers", "live: needs real provider keys and spends money")
     config.addinivalue_line("markers", "full: an evaluation matrix; skipped by --quick")
-    config.addinivalue_line("markers", "contract: runs against a spriteguru-web dev server; needs --cloud-url")
     if _is_worker(config):
         # workers get only the command line, so the controller's run id arrives in workerinput
         config.option.run_id = config.workerinput["spriteguru_run_id"]
@@ -70,10 +65,7 @@ def pytest_configure(config):
             w.mkdir(parents=True)
     # engines started by the tests record projects in a library of their own, never the user's gallery
     os.environ["SPRITEGURU_LIBRARY"] = str(WORK / config.option.run_id / "_library")
-    # C38: no test reaches spriteplay.com or the user's keychain. Cloud scenarios start the fake cloud
-    # and point their engines at it; everything else sees a closed port and a file keyring per library.
-    os.environ["SPRITEPLAY_CLOUD_URL"] = "http://127.0.0.1:9"
-    os.environ.pop("SPRITEGURU_CLOUD_URL", None)  # the older name must not point anywhere either (N8)
+    # Tests use a file-backed keyring per library and never touch the user's real keychain.
     support = str(ROOT / "e2e" / "support")
     os.environ["PYTHON_KEYRING_BACKEND"] = "filekeyring.FileKeyring"
     os.environ["PYTHONPATH"] = os.pathsep.join([support, *filter(None, [os.environ.get("PYTHONPATH")])])
@@ -115,11 +107,6 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "full" in item.keywords:
                 item.add_marker(quick)
-    if not config.getoption("--cloud-url"):
-        contract = pytest.mark.skip(reason="cloud contract scenario: pass --cloud-url <dev server>")
-        for item in items:
-            if "contract" in item.keywords:
-                item.add_marker(contract)
     if config.getoption("--live"):
         return
     skip = pytest.mark.skip(reason="live scenario: pass --live to run (spends money)")

@@ -21,7 +21,6 @@ dependencies = [
     "onnxruntime>=1.30.0",
     "openai>=3.19.2",
     "opencv-python-headless>=5.0.0.93",
-    "pathspec>=1.1.1",
     "pillow>=12.3.0",
     "playwright>=1.63.0",
     "pydantic>=2.13.5",

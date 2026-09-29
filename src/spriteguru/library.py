@@ -331,8 +331,3 @@ def create(name: str, *, style: Style, engine: str = "godot", fps: int = 12,
     project = Project.init(folder, style=style, engine=engine, fps=fps, name=name)
     touch(project.root)
     return project
-
-
-def cloud_links() -> dict[str, str]:
-    """Temporary empty result until the retired cloud routes are deleted in the next task."""
-    return {}
