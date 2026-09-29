@@ -139,6 +139,23 @@ Rename the desktop artifacts to `SpriteGuru.app` and `SpriteGuru.exe`, set the b
 
 Add the standard Apache License 2.0 text in `LICENSE` and a concise `NOTICE` identifying SpriteGuru and copyright 2026 Anil Beyazoglu. Update the README for an independent open-source desktop project: local architecture, installation, provider keys, CLI usage, development, packaging, testing, contribution expectations, license, and privacy/network behavior.
 
+### 8.1 Clean-checkout runbook
+
+The README must be sufficient for a new contributor to launch SpriteGuru without consulting another file. It must include:
+
+- exact `git clone` and `cd` commands for `Docyrus/spriteguru`;
+- supported operating systems and explicit Python, `uv`, Node.js, and npm version requirements;
+- platform-specific native prerequisites for pywebview and Playwright, including Linux system packages where applicable;
+- reproducible dependency installation using `uv sync` and `npm ci`;
+- the frontend build step and where its bundled output is written;
+- a no-credential first launch in synthetic mode and an observable smoke-check result;
+- complete provider-key setup through the OS keychain and `.env`, with `.env.example` matching every documented variable;
+- separate commands for running from source, frontend development, offline tests, live/provider tests, and distributable builds;
+- optional Git LFS setup for users who will commit generated binary assets;
+- concise troubleshooting for missing browser binaries, native-webview dependencies, keychain failures, occupied development ports, and absent provider keys.
+
+Following only the README from a clean checkout must produce a working local SpriteGuru project and open the desktop studio in synthetic mode without requiring an API key or SpritePlay account.
+
 Delete the obsolete cloud integration plan and remove cloud sections from other documentation. Historical old-name strings remain only where required to explain or test migration.
 
 After verification, create the public GitHub repository `Docyrus/spriteguru`, configure it as `origin`, and push the `main` branch. Do not publish generated test artifacts, local visual-companion files, credentials, environment files, caches, or build output.
@@ -190,4 +207,5 @@ The work is complete when:
 5. Every normal user-facing surface and distributable says SpriteGuru and uses the approved original Split Cells mark.
 6. Apache 2.0 licensing and open-source documentation are present.
 7. Targeted tests, frontend build/typecheck, and the complete offline E2E suite pass, with any environmental exception reported explicitly.
-8. The verified `main` branch is pushed to the public `Docyrus/spriteguru` GitHub repository.
+8. A clean-checkout validation confirms that the README alone is sufficient to install dependencies, build the studio, create a synthetic project, and launch SpriteGuru without provider credentials.
+9. The verified `main` branch is pushed to the public `Docyrus/spriteguru` GitHub repository.
