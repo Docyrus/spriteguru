@@ -889,7 +889,7 @@ git commit -m "chore: finalize open-source SpriteGuru"
 
 If there is nothing new to commit, keep the already-verified task commits.
 
-- [ ] **Step 7: Push the implementation to the public repository**
+- [x] **Step 7: Push the implementation to the public repository**
 
 Run:
 
@@ -902,7 +902,7 @@ git push origin main
 
 Expected: `main` is clean and synchronized with `https://github.com/Docyrus/spriteguru.git`.
 
-- [ ] **Step 8: Verify the published repository**
+- [x] **Step 8: Verify the published repository**
 
 Run:
 
