@@ -89,7 +89,6 @@ class State:
         self.runner: JobRunner | None = None
         self.tasks: dict[str, asyncio.Task] = {}
         self.port = 0
-        self.stopping = False
         if project is not None:
             self.attach(project)
 
@@ -154,10 +153,6 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
     async def _resume():
         if S.runner is not None:
             await S.runner.resume_unfinished()
-
-    @app.on_event("shutdown")
-    async def _stop():
-        S.stopping = True
 
     # -- project, settings, keys ------------------------------------------------------
 
@@ -734,18 +729,25 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
             return
         await ws.accept()
         q = S.bus.subscribe()
-        try:
+
+        async def pump():
             for e in list(S.bus.history)[-50:]:
                 await ws.send_json(json.loads(json.dumps(e, default=str)))
-            while not S.stopping:
-                try:
-                    e = await asyncio.wait_for(q.get(), timeout=1.0)
-                except asyncio.TimeoutError:
-                    continue  # wake up regularly so shutdown and dead clients are noticed
+            while True:
+                e = await q.get()
                 await ws.send_json(json.loads(json.dumps(e, default=str)))
+
+        # The studio never sends, so only a receive notices a closed window or the server shutting
+        # down (uvicorn closes open sockets first); a send-only loop hung until it was cancelled.
+        sender = asyncio.create_task(pump())
+        try:
+            while (await ws.receive())["type"] != "websocket.disconnect":
+                pass
         except (WebSocketDisconnect, RuntimeError):
             pass
         finally:
+            sender.cancel()
+            await asyncio.gather(sender, return_exceptions=True)  # a send to a closed socket fails
             S.bus.unsubscribe(q)
             try:
                 await ws.close()

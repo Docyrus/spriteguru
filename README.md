@@ -59,9 +59,10 @@ uv run spriteguru studio --project Demo.sprites
 ```
 
 The first command creates the project folder `Demo.sprites/` in the current directory, with the
-synthetic simulator as its provider mode. The second opens the SpriteGuru window with the Demo
-project open on **Characters**, showing the form to create the first character; the header shows
-the SpriteGuru mark and the Demo project. Nothing asks for a key or an account. (On Linux, add
+synthetic simulator as its provider mode. The second opens the SpriteGuru window on the project
+gallery with Demo already open: its card says **Open now**, and the header shows the SpriteGuru
+mark, **Demo** and **Synthetic**. Click **Characters** in the left rail to see "No characters yet"
+and the **New character** button. Nothing asks for a key or an account. (On Linux, add
 `--browser`.)
 
 The same project works from the command line, still with no keys:

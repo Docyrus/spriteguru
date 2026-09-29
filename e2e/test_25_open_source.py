@@ -30,3 +30,39 @@ def test_spriteguru_environment_name_wins_and_spritekit_is_a_fallback():
 
     assert canonical.stdout.strip() == "new"
     assert legacy.stdout.strip() == "old"
+
+
+def test_closing_the_studio_stops_the_engine_promptly_and_quietly(tmp_path):
+    """What a new contributor sees when they close the window: the launcher stops the engine while
+    a studio socket is open (and another has already gone away). It must exit within its grace
+    period, without an ASGI traceback."""
+    import json
+    import signal
+    import time
+
+    from websockets.sync.client import connect
+
+    env = {**os.environ, "SPRITEGURU_LIBRARY": str(tmp_path / "library"),
+           "PYTHON_KEYRING_BACKEND": "keyring.backends.null.Keyring"}
+    proc = subprocess.Popen([sys.executable, "-m", "spriteguru.cli", "serve", "--port", "0", "--token", "t0k",
+                             "--mode", "synthetic"], cwd=tmp_path, env=env, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, text=True)
+    try:
+        port = json.loads(proc.stdout.readline())["port"]
+        url = f"ws://127.0.0.1:{port}/api/events?token=t0k"
+        with connect(url):
+            pass  # a window that was closed
+        studio = connect(url)  # the window being closed now
+        time.sleep(1.5)
+        started = time.monotonic()
+        proc.send_signal(signal.SIGTERM)
+        proc.wait(timeout=10)
+        took = time.monotonic() - started
+        studio.close()
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+    stderr = proc.stderr.read()
+
+    assert took < 2.0, (took, stderr[-2000:])
+    assert "Traceback" not in stderr and "Exception in ASGI application" not in stderr, stderr[-2000:]
