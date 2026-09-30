@@ -20,20 +20,25 @@ from pathlib import Path
 def engine_command(project: Path | None, token: str, mode: str | None) -> list[str]:
     """The engine binary next to a frozen launcher, else the Python module. Without a project the
     engine starts on the gallery (P1)."""
-    args = ["serve", "--port", "0", "--token", token] + (["--project", str(project)] if project else [])
+    args = ["serve", "--port", "0", "--token", token, "--exit-with-parent"] + (["--project", str(project)] if project else [])
     if mode:
         args += ["--mode", mode]
     if getattr(sys, "frozen", False):
         name = "spriteguru-engine" + (".exe" if os.name == "nt" else "")
         here = Path(sys.executable).parent
-        exe = next((p for p in (here / "engine" / name, here / name) if p.is_file()), here / "engine" / name)
+        # macOS bundle: Contents/Resources/engine (RT5); elsewhere an engine/ folder next to the launcher
+        places = (here.parent / "Resources" / "engine" / name, here / "engine" / name, here / name)
+        exe = next((p for p in places if p.is_file()), places[0] if sys.platform == "darwin" else places[1])
         return [str(exe), *args]
     return [sys.executable, "-m", "spriteguru.cli", *args]
 
 
 def start_engine(project: Path | None, mode: str | None = None) -> tuple[subprocess.Popen, dict]:
     token = secrets.token_urlsafe(24)
-    proc = subprocess.Popen(engine_command(project, token, mode), stdout=subprocess.PIPE, stderr=None, text=True)
+    # RT4: the engine watches this pipe and stops when it closes, so quitting the app (which skips the
+    # `finally` in launch) or a crash never leaves it running
+    proc = subprocess.Popen(engine_command(project, token, mode), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                            stderr=None, text=True)
     while True:
         line = proc.stdout.readline()
         if not line:

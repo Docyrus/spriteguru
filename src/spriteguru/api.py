@@ -803,8 +803,25 @@ def free_port() -> int:
         return s.getsockname()[1]
 
 
+def _exit_with_parent() -> None:
+    """RT4: the launcher holds the other end of our stdin. When it ends, however it ends (window closed,
+    app quit, crash, kill -9), the OS closes the pipe; shut down the way SIGTERM does."""
+    import signal
+    import threading
+
+    def watch() -> None:
+        try:
+            while sys.stdin.buffer.read(4096):
+                pass
+        except (OSError, ValueError):
+            pass
+        os.kill(os.getpid(), signal.SIGTERM)
+
+    threading.Thread(target=watch, name="exit-with-parent", daemon=True).start()
+
+
 def run_server(project: Project | None, *, port: int = 0, token: str | None = None, mode: str | None = None,
-               open_browser: bool = False) -> None:
+               open_browser: bool = False, exit_with_parent: bool = False) -> None:
     """Bind 127.0.0.1 first, then announce {port, token}: the socket already accepts (connections
     queue in the backlog) by the time a launcher or test reads the announcement."""
     import uvicorn
@@ -829,4 +846,7 @@ def run_server(project: Project | None, *, port: int = 0, token: str | None = No
 
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     config = uvicorn.Config(app, log_level=app_env("LOG", "warning"), timeout_graceful_shutdown=3)
-    uvicorn.Server(config).run(sockets=[sock])
+    server = uvicorn.Server(config)
+    if exit_with_parent:
+        _exit_with_parent()
+    server.run(sockets=[sock])

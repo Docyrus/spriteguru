@@ -65,3 +65,53 @@ def test_closing_the_studio_stops_the_engine_promptly_and_quietly(tmp_path):
 
     assert took < 2.0, (took, stderr[-2000:])
     assert "Traceback" not in stderr and "Exception in ASGI application" not in stderr, stderr[-2000:]
+
+
+def test_the_engine_stops_when_the_app_is_quit_or_killed(tmp_path):
+    """RT4: quitting the app ends the launcher without running its cleanup (as `kill -9` does here), so
+    the engine must notice on its own that its launcher is gone, and stop within a few seconds."""
+    import json
+    import signal
+    import time
+
+    import httpx
+
+    env = {**os.environ, "SPRITEGURU_LIBRARY": str(tmp_path / "library"),
+           "PYTHON_KEYRING_BACKEND": "keyring.backends.null.Keyring"}
+    parent_code = ("import json, sys, time\n"
+                   "from spriteguru.launcher import start_engine\n"
+                   "proc, info = start_engine(None, 'synthetic')\n"
+                   "print(json.dumps({'engine': proc.pid, 'port': info['port']}), flush=True)\n"
+                   "time.sleep(600)\n")
+    parent = subprocess.Popen([sys.executable, "-c", parent_code], cwd=tmp_path, env=env, stdout=subprocess.PIPE,
+                              stderr=subprocess.DEVNULL, text=True)
+    engine = None
+    try:
+        info = json.loads(parent.stdout.readline())
+        engine, port = info["engine"], info["port"]
+        assert httpx.get(f"http://127.0.0.1:{port}/api/health", timeout=5).status_code in (200, 401, 404)
+        parent.send_signal(signal.SIGKILL)  # no finally, no atexit: what quitting the app amounts to
+        parent.wait(timeout=10)
+        started = time.monotonic()
+        while time.monotonic() - started < 10:
+            try:
+                os.kill(engine, 0)
+            except ProcessLookupError:
+                break
+            time.sleep(0.1)
+        took = time.monotonic() - started
+        alive = True
+        try:
+            os.kill(engine, 0)
+        except ProcessLookupError:
+            alive = False
+    finally:
+        if parent.poll() is None:
+            parent.kill()
+        if engine:
+            try:
+                os.kill(engine, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+    assert not alive and took < 5.0, (alive, took)

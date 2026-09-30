@@ -499,12 +499,15 @@ def eval_gen(root: Path = typer.Option(Path("e2e/work/genset"), help="folder for
 
 @app.command()
 def serve(port: int = 0, token: Optional[str] = None, project: Optional[Path] = ProjectOpt,
-          mode: Optional[str] = ModeOpt, open_browser: bool = typer.Option(False, "--open")):
+          mode: Optional[str] = ModeOpt, open_browser: bool = typer.Option(False, "--open"),
+          exit_with_parent: bool = typer.Option(False, "--exit-with-parent", hidden=True,
+                                                help="stop when stdin closes (the launcher's pipe, RT4)")):
     """Run the engine API on 127.0.0.1; prints {port, token} as JSON on startup. Without --project
     it starts with no project open and the studio shows the project gallery (P1)."""
     from .api import run_server
 
-    run_server(_project(project) if project else None, port=port, token=token, mode=mode, open_browser=open_browser)
+    run_server(_project(project) if project else None, port=port, token=token, mode=mode, open_browser=open_browser,
+               exit_with_parent=exit_with_parent)
 
 
 @app.command()
