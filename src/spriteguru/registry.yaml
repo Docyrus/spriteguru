@@ -11,8 +11,11 @@ providers:
 models:
   gpt-image-2.5-flare:
     provider: openai
+    label: GPT Image 2.5 Flare
+    maker: OpenAI
     role: guided sheets
     op: edit
+    image: {mask: true, max_inputs: 16}
     params: {quality: high, background: opaque, n: 2, output_format: png}
     price:
       # token-billed; estimate per output image from its pixel count
@@ -23,8 +26,11 @@ models:
       in_tokens_per_mpx: 1300
   gpt-image-2.5-sunburst:
     provider: openai
+    label: GPT Image 2.5 Sunburst
+    maker: OpenAI
     role: turnarounds, frame repairs, in-betweens
     op: edit
+    image: {mask: true, max_inputs: 16}
     params: {quality: high, background: opaque, n: 1, output_format: png}
     price:
       usd_per_mtok_text_in: 5.0
@@ -32,6 +38,48 @@ models:
       usd_per_mtok_image_out: 30.0
       out_tokens_per_mpx_high: 4000   # estimate used when the response carries no usage
       in_tokens_per_mpx: 1300
+  # Selectable image models through fal (IM1-IM10). `endpoints` maps our ops to fal endpoints; `image`
+  # holds what the fal adapter needs: mask support, the output pixel range, images per call, seeds.
+  seedream-5.0-flash:
+    provider: fal
+    label: Seedream 5.0 Flash
+    maker: ByteDance
+    role: selectable image model
+    op: edit
+    endpoints: {edit: bytedance/seedream/v5/flash/edit, generate: bytedance/seedream/v5/flash/text-to-image}
+    params: {n: 2}
+    image: {mask: false, max_inputs: 10, min_pixels: 1048576, max_pixels: 4194304, per_call: 6, seed: false}
+    price: {usd_per_image: 0.027}
+  seedream-5.0-pro:
+    provider: fal
+    label: Seedream 5.0 Pro
+    maker: ByteDance
+    role: selectable image model
+    op: edit
+    endpoints: {edit: bytedance/seedream/v5/pro/edit, generate: bytedance/seedream/v5/pro/text-to-image}
+    params: {n: 2}
+    image: {mask: false, max_inputs: 10, min_pixels: 1048576, max_pixels: 4194304, per_call: 6, seed: false}
+    price: {usd_per_image: 0.0675}
+  seedream-5.0-lite:
+    provider: fal
+    label: Seedream 5.0 Lite
+    maker: ByteDance
+    role: selectable image model
+    op: edit
+    endpoints: {edit: bytedance/seedream/v5/lite/edit, generate: bytedance/seedream/v5/lite/text-to-image}
+    params: {n: 2}
+    image: {mask: false, max_inputs: 10, min_pixels: 3686400, max_pixels: 16777216, per_call: 6, seed: false}
+    price: {usd_per_image: 0.035}
+  flux-2-max:
+    provider: fal
+    label: FLUX.2 [max]
+    maker: Black Forest Labs
+    role: selectable image model
+    op: edit
+    endpoints: {edit: fal-ai/flux-2-max/edit, generate: fal-ai/flux-2-max}
+    params: {n: 2}
+    image: {mask: false, max_inputs: 10, min_pixels: 262144, max_pixels: 4194304, per_call: 1, seed: true}
+    price: {usd_first_mp: 0.07, usd_per_extra_mp: 0.03}  # input images count as processed megapixels
   rd-advanced-animation:
     provider: retrodiffusion
     role: pixel loops
@@ -82,6 +130,16 @@ roles:
   vector_idle: arrow-2
   vector_motion: gpt-6-sol
   judge: gpt-6-luna
+
+# Image tasks the user can point at another model (Settings > Image models, `spriteguru models`); each
+# task's default is its role above.
+image_tasks:
+  guided_sheet: Sprite sheets
+  turnaround: Turnarounds
+  repair: Frame repairs
+  inbetween: In-betweens
+image_models: [gpt-image-2.5-flare, gpt-image-2.5-sunburst, seedream-5.0-flash, seedream-5.0-pro, seedream-5.0-lite,
+               flux-2-max]
 
 # route[style][loop|oneshot]; idle vector loops use Quiver, other vector loops use AI-coded motion
 routes:

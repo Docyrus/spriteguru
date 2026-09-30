@@ -332,3 +332,24 @@ roar). Each starts and ends near the idle stance, so a game can cut from idle in
 | IN3 | The export is evenly timed, so the signature beat flashes by and the last pose never settles | Exported durations follow the choreography: the signature beat is held and the final stance is held longest |
 | IN4 | An intro's signature beat doesn't read, e.g. `intro`'s flourish comes out as a generic idle or a punch | Each intro's signature pose shows in the export's silhouettes: `intro`'s fist overhead is the tallest pose; the salute's bow and the powerup's charge are the lowest; the levelled weapon and the beckoning arm reach furthest forward; the leap's airborne frames keep their lift |
 | IN5 | A west-facing character that can't be mirrored gets its left and right swapped inside other words ("upright" → "upleft", "straightening" → "stleftening", "bright" → "bleft"), so the image model gets garbled instructions | Only the whole words right and left are swapped |
+
+## Selectable image models (written before the code, from a user request)
+
+Each image task (sprite sheets, turnarounds, frame repairs, in-betweens) can use GPT Image 2.5 Flare
+or Sunburst (OpenAI) or, through fal, Seedream 5.0 Flash, Seedream 5.0 Pro, Seedream 5.0 Lite or
+FLUX.2 [max]. The choice is a project setting, made in Settings or with `spriteguru models`; GPT
+Image stays the default. fal image calls use fal's queue REST API directly (images inline as data
+URIs), so the base URL can point at a local fake in tests.
+
+| ID | Failure | Required behaviour |
+| --- | --- | --- |
+| IM1 | The choice isn't honoured: a task still calls GPT Image after another model was picked, or a job switches models halfway because Settings changed while it ran or before it resumed | A job resolves its models once, records them in its state and compile record, and every call of a task uses its model; candidate metadata and the ledger name it. A manual repair or in-between, a new action, uses the current setting |
+| IM2 | An unknown model or task is saved, or project.json names a model that no longer exists, and generation crashes | The API and CLI refuse unknown tasks and models (422 with the allowed values); a stale name in project.json falls back to the task's default and says so in the job notes |
+| IM3 | A fal model draws at a size other than the canvas (each model has its own pixel range; Seedream 5.0 Lite needs at least 2560×1440), so frames land outside their cells | The request asks for the canvas aspect scaled into the model's range (dimensions rounded to 16), and the result is resized back to the exact canvas before analysis |
+| IM4 | A mask is sent to a model that has none, or a maskless model's repair wastes a first "masked" attempt | Models without mask support never get one; their repairs go straight to the maskless edit, and only the target cell is taken from the result |
+| IM5 | A model that returns one image per call (FLUX.2 [max]) gives one candidate where the job asked for two | The provider makes one call per image with distinct seeds; Seedream batches up to 6 images per call |
+| IM6 | fal spend is missing or wrong in estimates and the ledger (fal returns no cost), so caps don't protect the user | Estimates use each model's price: Seedream per image; FLUX.2 [max] $0.07 for the first megapixel and $0.03 per further megapixel, input images included. The ledger records that cost and the builder's estimate uses the chosen model |
+| IM7 | fal's safety checker flags an output and the job retries it forever or exports a blank frame | A flagged output is a non-retryable error naming the model and task |
+| IM8 | A fal model is chosen but there is no fal key, and the job fails late or with a vague error | The call fails before anything is spent with "no fal key", and Settings marks fal models as needing a key |
+| IM9 | fal errors are handled wrong: a bad request retried, or a busy or failing service not retried | 4xx other than 429 surface fal's detail and are not retried; 429, 5xx and timeouts are retried by the hub |
+| IM10 | Output cached for one model is replayed for another after a switch | The cache key includes the model, so a switch always makes a fresh call |

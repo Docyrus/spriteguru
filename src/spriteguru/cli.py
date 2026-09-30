@@ -327,6 +327,35 @@ def export_cmd(anim_id: str, engine: Optional[str] = None, project: Optional[Pat
 
 
 @app.command()
+def models(set_: Optional[list[str]] = typer.Option(None, "--set", help="task=model, e.g. guided_sheet=seedream-5.0-pro"),
+           reset: bool = typer.Option(False, "--reset", help="every task back to its default"),
+           project: Optional[Path] = ProjectOpt):
+    """Image model per task (sprite sheets, turnarounds, repairs, in-betweens); with no options, list them."""
+    from . import registry
+
+    proj = _project(project)
+    chosen = {} if reset else dict(proj.config.settings.image_models)
+    for item in set_ or []:
+        task, _, model_id = item.partition("=")
+        try:
+            registry.check_image_choice(task.strip(), model_id.strip())  # IM2
+        except ValueError as e:
+            con.print(f"[red]{e}[/red]")
+            raise typer.Exit(2)
+        chosen[task.strip()] = model_id.strip()
+    if set_ or reset:
+        proj.config.settings.image_models = chosen
+        proj.save()
+    for task, label in registry.image_tasks().items():
+        m = registry.image_model(task, proj.config.settings.image_models)
+        info = registry.image_model_info(m)
+        default = " (default)" if m == registry.model_for(task) else ""
+        con.print(f"{label:<14} {info['label']}{default} [dim]{info['maker']} · {info['price']}[/dim]")
+    print(json.dumps({"models": registry.resolve_image_models(proj.config.settings.image_models),
+                      "available": registry.image_models()}))
+
+
+@app.command()
 def ledger(project: Optional[Path] = ProjectOpt):
     """Spend summary from ledger.jsonl."""
     from .ledger import Ledger

@@ -52,6 +52,24 @@ export interface Settings {
   provider_mode: 'live' | 'synthetic';
   judge_enabled: boolean;
   judge_disabled?: string[]; // judge issue types switched off by `spriteguru eval judge`
+  image_models?: Record<string, string>; // image task -> model; unset tasks use the default
+}
+
+/** A model the user can pick for an image task (Settings > Image models). */
+export interface ImageModelInfo {
+  id: string;
+  label: string;
+  maker: string;
+  provider: string;
+  mask: boolean;
+  price: string;
+}
+
+export interface ImageTaskInfo {
+  task: string;
+  label: string;
+  default: string;
+  model: string;
 }
 
 export interface ProjectConfig {
@@ -91,6 +109,7 @@ export interface ProjectInfo {
     matte: { available: boolean; model: string };
   };
   roles: Record<string, string>;
+  image_models: { tasks: ImageTaskInfo[]; models: ImageModelInfo[] };
   ledger: LedgerSummary;
   version: string;
 }

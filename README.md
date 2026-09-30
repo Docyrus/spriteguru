@@ -85,7 +85,7 @@ Real generation uses your own accounts with these providers:
 | Provider | Used for | Environment variable |
 | --- | --- | --- |
 | OpenAI | turnarounds, guided sheets, repairs, in-betweens (GPT Image 2.5); the QA judge and vector motion (GPT-6 Luna, Sol) | `OPENAI_API_KEY` |
-| fal | HD looping animation through MiniMax H3 Max video | `FAL_KEY` |
+| fal | HD looping animation through MiniMax H3 Max video; Seedream 5.0 and FLUX.2 [max] when you pick them as image models | `FAL_KEY` |
 | Retro Diffusion | pixel-art looping animation (optional: without it, pixel loops fall back to a guided sheet) | `RD_API_KEY` |
 | Quiver | vector characters and idle loops (Quiver Arrow 2) | `QUIVERAI_API_KEY` |
 
@@ -178,6 +178,24 @@ In the studio, drop an image on the character form.
 
 Model ids, fixed parameters and prices live in `src/spriteguru/registry.yaml`.
 
+### Image models
+
+Every image task can use a different model: sprite sheets (guided canvas edits), turnarounds, frame
+repairs and in-betweens. GPT Image 2.5 (OpenAI) is the default; through fal you can also pick
+Seedream 5.0 Flash, Seedream 5.0 Pro, Seedream 5.0 Lite or FLUX.2 [max]. Choose in Settings, under
+Image models, or on the command line:
+
+```bash
+uv run spriteguru models                                    # each task's model, maker and price
+uv run spriteguru models --set guided_sheet=seedream-5.0-pro --set repair=flux-2-max
+uv run spriteguru models --reset                            # every task back to GPT Image
+```
+
+A job keeps the models it started with, even if the setting changes before it resumes. Seedream
+and FLUX take no mask, so a repair redraws the whole canvas and keeps only the target frame.
+Seedream is priced per image; FLUX.2 [max] per processed megapixel, input images included (about
+$0.25 per candidate for a 2560x1024 sheet).
+
 ### The studio
 
 `spriteguru studio` starts the engine (`spriteguru serve`, bound to 127.0.0.1 with a per-launch
@@ -189,7 +207,7 @@ ledger all live inside it. Projects opened from elsewhere show up as recent proj
 The header holds the project switcher and the active-character switcher. Every tab works on the
 active character: Characters (with its finished animations playing in place), Animation builder
 (route, cost and guide canvas before sending), Candidates, Sheet review, Frame editor, Findings
-(one-click remedies with costs), Export and Settings (provider keys).
+(one-click remedies with costs), Export and Settings (provider keys, image models, budget).
 
 ### Coming from SpritePlay
 

@@ -36,7 +36,7 @@ def estimate(project: Project, anim_id: str, *, mode: str | None = None) -> dict
     cost = 0.0
     lines = []
     if c.route in ("guided", "guided-pixel"):
-        m = registry.model_for("guided_sheet")
+        m = c.models["guided_sheet"]
         est = registry.estimate_cost(m, "edit", {}, prompt=c.prompt.text,
                                      input_sizes=[(c.plan.width, c.plan.height), (512, 512)], n=2,
                                      size=(c.plan.width, c.plan.height))

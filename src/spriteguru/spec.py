@@ -60,6 +60,9 @@ class Settings(BaseModel):
     provider_mode: Literal["live", "synthetic"] = "live"
     judge_enabled: bool = True
     judge_disabled: list[str] = []  # judge issue types switched off by calibration (precision < 0.8)
+    # image task -> model; unset tasks use the registry default. Checked where it is written (API, CLI), not
+    # on load, so a model that has left the registry falls back to the default instead of failing (IM2)
+    image_models: dict[str, str] = {}
 
 
 class ProjectConfig(BaseModel):

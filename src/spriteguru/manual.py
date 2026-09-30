@@ -8,9 +8,17 @@ import json
 import json
 
 from . import generate as gen
+from . import registry
 from .jobs import JobRunner, _Handle, _load_frames
 from .qa import repair as repair_mod
 from .spec import Finding
+
+
+def _with_current_models(runner: JobRunner, c: gen.Compiled) -> gen.Compiled:
+    """IM1: a manual repair or in-between is a new action, so it uses the models chosen in Settings now."""
+    import dataclasses
+
+    return dataclasses.replace(c, models=registry.resolve_image_models(runner.project.config.settings.image_models))
 
 
 async def manual_repair(runner: JobRunner, anim_id: str, frame: int, *, kind: str = "pose",
@@ -24,7 +32,7 @@ async def manual_repair(runner: JobRunner, anim_id: str, frame: int, *, kind: st
     st = jobs[0]
     h = _Handle(st)
     runner.jobs[st.id] = h
-    c, _ = runner._compiled(h)
+    c = _with_current_models(runner, runner._compiled(h)[0])
     if c.route not in ("guided", "guided-pixel"):
         raise ValueError(f"{c.route} jobs repair by re-roll; run `spriteguru gen` again")
     best = runner._best_candidate(st)
@@ -63,7 +71,7 @@ async def manual_inbetween(runner: JobRunner, anim_id: str, after: int, *, job_i
     st = jobs[0]
     h = _Handle(st)
     runner.jobs[st.id] = h
-    c, _ = runner._compiled(h)
+    c = _with_current_models(runner, runner._compiled(h)[0])
     if c.route not in ("guided", "guided-pixel"):
         raise ValueError(f"{c.route} jobs cannot insert generated in-betweens")
     best = runner._best_candidate(st)

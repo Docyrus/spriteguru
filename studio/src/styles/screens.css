@@ -2125,3 +2125,20 @@ kbd {
   gap: 6px;
   min-height: 28px;
 }
+
+/* ------------------------------------------------------- settings: image models */
+
+.image-model-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.image-model-row select {
+  width: 100%;
+}
+.image-model-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}

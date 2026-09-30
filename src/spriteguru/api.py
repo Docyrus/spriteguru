@@ -72,6 +72,7 @@ class SettingsIn(BaseModel):
     luna_effort: str | None = None
     provider_mode: str | None = None
     judge_enabled: bool | None = None
+    image_models: dict[str, str] | None = None  # image task -> model; the whole map is replaced (IM1, IM2)
     asset_folder: str | None = None
     engine: str | None = None
     fps: int | None = None
@@ -176,6 +177,10 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
                                                             "model": app_env("MATTE_MODEL",
                                                                              "birefnet-general")}},
                 "roles": registry.load()["roles"], "ledger": Ledger(p.ledger_path).summary(),
+                "image_models": {"tasks": [{"task": t, "label": label, "default": registry.model_for(t),
+                                            "model": registry.image_model(t, p.config.settings.image_models)}
+                                           for t, label in registry.image_tasks().items()],
+                                 "models": [registry.image_model_info(m) for m in registry.image_models()]},
                 "version": __version__}
 
     @app.put("/api/project/active-character")
@@ -287,6 +292,11 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
 
         cfg = S.project.config
         data = body.model_dump(exclude_none=True)
+        for task, model_id in (data.get("image_models") or {}).items():
+            try:
+                registry.check_image_choice(task, model_id)
+            except ValueError as e:
+                raise HTTPException(422, [{"loc": ["image_models", task], "msg": str(e)}])
         top = {k: data.pop(k) for k in ("asset_folder", "engine", "fps") if k in data}
         try:
             settings = Settings.model_validate({**cfg.settings.model_dump(), **data})
@@ -607,12 +617,20 @@ def create_app(project: Project | None, token: str, *, mode: str | None = None) 
         est = service.estimate(S.project, anim_id, mode=S.runner.hub.mode)
         g = est.get("guide")
         mode = S.runner.hub.mode
-        repair_model = registry.model_for("repair")
+        chosen = registry.resolve_image_models(S.project.config.settings.image_models)
         size = (g.plan.width, g.plan.height) if g is not None else (1024, 1024)
-        repair = 0.0 if mode == "synthetic" else registry.estimate_cost(repair_model, "edit", {}, input_sizes=[size, (512, 512)],
-                                                                         n=1, size=size, prompt="x" * 400)
+
+        def cell_edit(task: str, scale: float) -> float:
+            if mode == "synthetic":
+                return 0.0
+            return registry.estimate_cost(chosen[task], "edit", {}, input_sizes=[size, (512, 512)], n=1, size=size,
+                                          prompt="x" * 400) * scale
+
+        repair = cell_edit("repair", 1.0)
+        # an in-between edits a 2x2 canvas; token-billed models charge for its smaller area
+        inbetween = cell_edit("inbetween", 0.4 if "usd_per_mtok_image_out" in registry.model(chosen["inbetween"])["price"] else 1.0)
         return {"frame_repair": round(repair, 4), "identity_fix": round(repair, 4), "pose_fix": round(repair, 4),
-                "inbetween": round(repair * 0.4, 4), "reroll": est["estimate_usd"], "confirm_layout": 0.0,
+                "inbetween": round(inbetween, 4), "reroll": est["estimate_usd"], "confirm_layout": 0.0,
                 "auto_fixed": 0.0, "ml_matte": 0.0, "regenerate_frame": round(repair, 4)}
 
     @app.post("/api/jobs/{job_id:path}/layout")

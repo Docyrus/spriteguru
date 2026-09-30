@@ -29,6 +29,78 @@ def model_for(role: str) -> str:
     return load()["roles"][role]
 
 
+# ---------------------------------------------------------------------------
+# Selectable image models (IM1-IM10)
+
+
+def image_tasks() -> dict[str, str]:
+    """Task -> label for the image tasks a project can point at another model."""
+    return dict(load()["image_tasks"])
+
+
+def image_models() -> list[str]:
+    return list(load()["image_models"])
+
+
+def check_image_choice(task: str, model_id: str) -> None:
+    """IM2: refuse an unknown task or model, naming the allowed values."""
+    if task not in image_tasks():
+        raise ValueError(f"unknown image task {task!r}; tasks: {', '.join(image_tasks())}")
+    if model_id not in image_models():
+        raise ValueError(f"unknown image model {model_id!r} for {task}; models: {', '.join(image_models())}")
+
+
+def image_model(task: str, chosen: dict[str, str] | None = None) -> str:
+    """The model for an image task: the project's choice, else the task's default role (IM2: a stale
+    name falls back to the default)."""
+    m = (chosen or {}).get(task)
+    return m if m in image_models() else model_for(task)
+
+
+def resolve_image_models(chosen: dict[str, str] | None = None) -> dict[str, str]:
+    return {t: image_model(t, chosen) for t in image_tasks()}
+
+
+def stale_image_choices(chosen: dict[str, str] | None) -> list[str]:
+    return [f"{t}: {m}" for t, m in (chosen or {}).items() if t in image_tasks() and m not in image_models()]
+
+
+def supports_mask(model_id: str) -> bool:
+    return bool(model(model_id).get("image", {}).get("mask", False))
+
+
+def fal_image_size(size: tuple[int, int], caps: dict[str, Any]) -> tuple[int, int]:
+    """IM3: the canvas aspect scaled into the model's pixel range, each side a multiple of 16."""
+    w, h = size
+    lo, hi = float(caps.get("min_pixels", 0)), float(caps.get("max_pixels", 4096 * 4096))
+    px = float(w * h)
+    s = (lo / px) ** 0.5 if px < lo else (hi / px) ** 0.5 if px > hi else 1.0
+
+    def snap(v: float, up: bool) -> int:
+        q = v / 16
+        return int(16 * (int(q) + (1 if up and q != int(q) else 0))) or 16
+
+    up = px * s * s <= lo * 1.0001  # rounding must not drop below the minimum or rise above the maximum
+    W, H = snap(w * s, up), snap(h * s, up)
+    while W * H > hi:
+        W, H = W - 16, max(16, round(H * (W - 16) / W / 16) * 16)
+    return W, H
+
+
+def image_model_info(model_id: str) -> dict[str, Any]:
+    """What Settings shows for a selectable model."""
+    m = model(model_id)
+    price = m.get("price", {})
+    if "usd_per_image" in price:
+        price_text = f"${price['usd_per_image']:g} per image"
+    elif "usd_first_mp" in price:
+        price_text = f"${price['usd_first_mp']:g} first MP + ${price['usd_per_extra_mp']:g} per extra MP, inputs included"
+    else:
+        price_text = "token-billed, about $0.05 per sheet-sized image"
+    return {"id": model_id, "label": m.get("label", model_id), "maker": m.get("maker", ""),
+            "provider": m["provider"], "mask": supports_mask(model_id), "price": price_text}
+
+
 def provider_config(provider: str) -> dict[str, Any]:
     return load()["providers"][provider]
 
@@ -73,6 +145,15 @@ def estimate_cost(model_id: str, op: str, params: dict[str, Any], *, prompt: str
         image_out = n * _image_tokens(w, h, price.get("out_tokens_per_mpx_high", 4000))
         return (text_in * price["usd_per_mtok_text_in"] + image_in * price["usd_per_mtok_image_in"]
                 + image_out * price["usd_per_mtok_image_out"]) / 1e6
+    if "usd_per_image" in price:
+        return price["usd_per_image"] * n
+    if "usd_first_mp" in price:
+        # one call per image; each processes its inputs and its output (IM6)
+        import math
+
+        out_mp = math.ceil((size or (1024, 1024))[0] * (size or (1024, 1024))[1] / 1e6)
+        in_mp = sum(math.ceil(iw * ih / 1e6) for iw, ih in (input_sizes or []))
+        return n * (price["usd_first_mp"] + price["usd_per_extra_mp"] * max(0, out_mp + in_mp - 1))
     if "usd_per_second" in price:
         today = today or dt.date.today()
         rate = price["usd_per_second"]

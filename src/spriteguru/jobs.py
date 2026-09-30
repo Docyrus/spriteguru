@@ -59,6 +59,7 @@ class JobState(BaseModel):
     result: dict = {}
     approval: dict | None = None
     seed: int = 0
+    models: dict = {}  # image task -> model, fixed when the job first compiles (IM1)
 
 
 class EventBus:
@@ -321,7 +322,9 @@ class JobRunner:
             name = read_json(meta_p)["character"] if meta_p.is_file() else h.state.anim_id.rsplit("-", 2)[0]
             rec = self.project.character(h.state.character or name)
             h.state.character = rec.name
-            c = gen.compile_spec(self.project, spec, rec, key_exclude=key_exclude, mode=self.hub.mode)
+            c = gen.compile_spec(self.project, spec, rec, key_exclude=key_exclude, mode=self.hub.mode,
+                                 models=h.state.models or None)
+            h.state.models = dict(c.models)  # a re-roll, resume or settings change keeps the job's models
             c.__dict__["sol_effort"] = self.project.config.settings.sol_effort
             h.memo[memo_key] = (c, rec)
         return h.memo[memo_key]

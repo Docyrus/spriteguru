@@ -3,7 +3,7 @@ import { api, ApiError } from '../lib/api';
 import { usd } from '../lib/format';
 import { useAsync } from '../lib/hooks';
 import { errText, useStore } from '../lib/store';
-import { EFFORTS, ENGINES, type Effort, type EngineName, type LedgerEntry, type LedgerSummary } from '../lib/types';
+import { EFFORTS, ENGINES, type Effort, type EngineName, type ImageModelInfo, type ImageTaskInfo, type LedgerEntry, type LedgerSummary } from '../lib/types';
 import { host } from '../host';
 import { Button, ErrorNote, Field, Modal, Segmented, Spinner, Toggle } from '../ui/controls';
 
@@ -36,6 +36,62 @@ function EffortPicker({ value, onChange, testid, label }: { value: string; onCha
       label={label}
       options={opts.map((e) => ({ value: e, label: e }))}
     />
+  );
+}
+
+const IMAGE_TASK_HINT: Record<string, string> = {
+  guided_sheet: 'Draws each animation sheet from the grey pose guide.',
+  turnaround: "Draws a new character's reference views.",
+  repair: 'Redraws a frame that failed a check.',
+  inbetween: 'Draws a missing frame between two others.',
+};
+
+function ImageModelRow({
+  task,
+  value,
+  models,
+  falKey,
+  onChange,
+}: {
+  task: ImageTaskInfo;
+  value: string;
+  models: ImageModelInfo[];
+  falKey: boolean;
+  onChange: (v: string) => void;
+}) {
+  const m = models.find((x) => x.id === value);
+  const byMaker = [...new Set(models.map((x) => (x.provider === 'fal' ? `${x.maker} via fal` : x.maker)))];
+  const needsKey = m?.provider === 'fal' && !falKey;
+  return (
+    <div className="image-model-row" data-testid="settings-image-model" data-task={task.task}>
+      <Field label={task.label} htmlFor={`im-${task.task}`} hint={IMAGE_TASK_HINT[task.task]}>
+        <select id={`im-${task.task}`} value={value} onChange={(e) => onChange(e.target.value)} data-testid="settings-image-model-select">
+          {byMaker.map((group) => (
+            <optgroup key={group} label={group}>
+              {models
+                .filter((x) => (x.provider === 'fal' ? `${x.maker} via fal` : x.maker) === group)
+                .map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.label}
+                    {x.id === task.default ? ' (default)' : ''}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
+        </select>
+      </Field>
+      {m ? (
+        <div className="image-model-meta muted small-print" data-testid="settings-image-model-meta">
+          <span>{m.price}</span>
+          {!m.mask ? <span title="Repairs redraw the whole canvas and keep only the target frame.">no mask input</span> : null}
+          {needsKey ? (
+            <span className="badge badge-warn" data-testid="settings-image-model-needs-key">
+              Needs a fal key
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -117,6 +173,7 @@ export function SettingsScreen() {
   const [confirmLive, setConfirmLive] = useState(false);
   const [modeBusy, setModeBusy] = useState(false);
   const [dl, setDl] = useState(false);
+  const [imageDraft, setImageDraft] = useState<Record<string, string> | null>(null);
 
   const base = useMemo<Draft | null>(() => {
     if (!project) return null;
@@ -133,11 +190,20 @@ export function SettingsScreen() {
     };
   }, [project]);
 
+  // the model each image task uses now, defaults included
+  const imageBase = useMemo<Record<string, string> | null>(
+    () => (project ? Object.fromEntries(project.image_models.tasks.map((t) => [t.task, t.model])) : null),
+    [project],
+  );
+
   useEffect(() => {
     if (base && draft === null) setDraft(base);
   }, [base, draft]);
+  useEffect(() => {
+    if (imageBase && imageDraft === null) setImageDraft(imageBase);
+  }, [imageBase, imageDraft]);
 
-  if (!project || !draft || !base) {
+  if (!project || !draft || !base || !imageDraft || !imageBase) {
     return (
       <div className="screen" data-testid="settings-screen">
         <div className="screen-head">
@@ -151,14 +217,22 @@ export function SettingsScreen() {
   }
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => (d ? { ...d, [k]: v } : d));
-  const changed = (Object.keys(draft) as (keyof Draft)[]).filter((k) => draft[k] !== base[k]);
+  const changedSettings = (Object.keys(draft) as (keyof Draft)[]).filter((k) => draft[k] !== base[k]);
+  const changedTasks = Object.keys(imageDraft).filter((t) => imageDraft[t] !== imageBase[t]);
+  const changed = [...changedSettings, ...changedTasks];
   const numOk = (s: string) => s.trim() !== '' && Number.isFinite(Number(s)) && Number(s) >= 0;
   const invalid =
     !numOk(draft.session_cap_usd) || !numOk(draft.job_cap_usd) || !numOk(draft.fps) || Number(draft.fps) < 1 || Number(draft.fps) > 60;
 
   const save = async () => {
     const body: Record<string, unknown> = {};
-    for (const k of changed) {
+    if (changedTasks.length) {
+      // only choices that differ from a task's default are stored, so defaults can move with the app
+      body.image_models = Object.fromEntries(
+        project.image_models.tasks.filter((t) => imageDraft[t.task] !== t.default).map((t) => [t.task, imageDraft[t.task]]),
+      );
+    }
+    for (const k of changedSettings) {
       if (k === 'session_cap_usd' || k === 'job_cap_usd') body[k] = Number(draft[k]);
       else if (k === 'fps') body[k] = Math.round(Number(draft.fps));
       else if (k === 'asset_folder') body[k] = draft.asset_folder.trim();
@@ -170,6 +244,7 @@ export function SettingsScreen() {
       await api.patchSettings(body);
       await reloadProject();
       setDraft(null);
+      setImageDraft(null);
       toast('Settings saved.', 'ok');
     } catch (e) {
       // 422 from the engine lists each rejected field
@@ -217,7 +292,7 @@ export function SettingsScreen() {
               <span className="badge badge-warn" data-testid="settings-dirty">
                 {changed.length} unsaved
               </span>
-              <Button size="sm" variant="ghost" onClick={() => (setDraft(base), setSaveError(null))} data-testid="settings-revert">
+              <Button size="sm" variant="ghost" onClick={() => (setDraft(base), setImageDraft(imageBase), setSaveError(null))} data-testid="settings-revert">
                 Revert
               </Button>
             </>
@@ -257,6 +332,28 @@ export function SettingsScreen() {
               ))}
             </div>
             <p className="muted small-print">Keys live in the OS keychain; environment variables override them. The studio never shows a stored key.</p>
+          </div>
+        </section>
+
+        <section className="panel" data-testid="settings-image-models">
+          <div className="panel-head">
+            <h2>Image models</h2>
+          </div>
+          <div className="panel-body form-stack">
+            {project.image_models.tasks.map((t) => (
+              <ImageModelRow
+                key={t.task}
+                task={t}
+                value={imageDraft[t.task] ?? t.model}
+                models={project.image_models.models}
+                falKey={!!project.keys.fal?.configured}
+                onChange={(v) => setImageDraft((d) => ({ ...(d ?? {}), [t.task]: v }))}
+              />
+            ))}
+            <p className="muted small-print">
+              A job keeps the models it started with. Seedream and FLUX run on fal with your fal key; they take no mask, so a repair redraws the
+              whole canvas and keeps only the target frame.
+            </p>
           </div>
         </section>
 
@@ -390,12 +487,14 @@ export function SettingsScreen() {
             </div>
             <table className="roles" data-testid="settings-roles">
               <tbody>
-                {Object.entries(project.roles).map(([role, model]) => (
-                  <tr key={role}>
-                    <td className="muted">{role.replace(/_/g, ' ')}</td>
-                    <td>{model}</td>
-                  </tr>
-                ))}
+                {Object.entries(project.roles)
+                  .filter(([role]) => !project.image_models.tasks.some((t) => t.task === role))
+                  .map(([role, model]) => (
+                    <tr key={role}>
+                      <td className="muted">{role.replace(/_/g, ' ')}</td>
+                      <td>{model}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

@@ -43,12 +43,14 @@ class Compiled:
     prompt: prompts.Prompt | None = None
     flip_output: bool = False
     notes: list[str] = field(default_factory=list)
+    models: dict[str, str] = field(default_factory=registry.resolve_image_models)  # image task -> model (IM1)
 
     def summary(self) -> dict:
         return {"route": self.route, "key": self.key, "key_distance": round(self.key_distance, 4),
                 "facing_generated": self.spec.facing, "flip_output": self.flip_output,
                 "plan": self.plan.to_dict() if self.plan else None, "choreo": self.choreo.name,
-                "prompt": self.prompt.provenance() if self.prompt else None, "notes": self.notes}
+                "prompt": self.prompt.provenance() if self.prompt else None, "notes": self.notes,
+                "models": self.models}
 
 
 def spec_for_character(rec: CharacterRecord, action: str, *, facing: str = "E", frames: int | None = None,
@@ -84,8 +86,12 @@ def _key_distance(hx: str, palette: list[str]) -> float:
 
 
 def compile_spec(project: Project, spec: SpriteSpec, rec: CharacterRecord, *, key_exclude: set[str] | None = None,
-                 mode: str = "live") -> Compiled:
+                 mode: str = "live", models: dict[str, str] | None = None) -> Compiled:
+    """`models`: the image models a running job already chose (IM1); otherwise the project's settings."""
     notes = []
+    chosen = project.config.settings.image_models
+    notes += [f"image model {s} is not available any more; using the default" for s in registry.stale_image_choices(chosen)]
+    models = dict(models) if models else registry.resolve_image_models(chosen)
     route = registry.route_for(spec)
     if route == "rd-loop" and mode == "live" and not keys.get("retrodiffusion"):
         route = "guided-pixel"
@@ -110,7 +116,7 @@ def compile_spec(project: Project, spec: SpriteSpec, rec: CharacterRecord, *, ke
     if dist < 0.15:
         notes.append(f"best key {key} is only {dist:.2f} from the palette (want 0.15)")
     ref = reference_view(project, rec, gen_spec.facing)
-    c = Compiled(gen_spec, route, key, dist, ch, ref, flip_output=flip, notes=notes)
+    c = Compiled(gen_spec, route, key, dist, ch, ref, flip_output=flip, notes=notes, models=models)
     if route in ("guided", "guided-pixel"):
         aspect = None
         if kind in ("vehicle", "machine") and ref is not None:
@@ -168,7 +174,7 @@ async def generate(hub: ProviderHub, c: Compiled, *, job: str | None = None, see
 
 
 async def _guided(hub: ProviderHub, c: Compiled, *, job, seed, n) -> list[CandidateOut]:
-    model = registry.model_for("guided_sheet")
+    model = c.models["guided_sheet"]
     params = dict(registry.model(model)["params"])
     count = n or int(params.pop("n", 2))
     params.pop("n", None)
@@ -176,8 +182,8 @@ async def _guided(hub: ProviderHub, c: Compiled, *, job, seed, n) -> list[Candid
     if c.reference is not None:
         images.append(reference_on_key(c.reference, c.key, (512, 512)))
     req = ProviderRequest(op="edit", model=model, prompt=c.prompt.text, params=params, images=images,
-                          mask=c.guide.mask_png(), n=count, size=(c.plan.width, c.plan.height), seed=seed,
-                          purpose="guided_sheet")
+                          mask=c.guide.mask_png() if registry.supports_mask(model) else None, n=count,
+                          size=(c.plan.width, c.plan.height), seed=seed, purpose="guided_sheet")
     cands = await hub.call(req, job=job)
     return [CandidateOut(f"c{i + 1}", cd.data, "image/png", {**cd.meta, **c.prompt.provenance(), "model": model,
                                                                "params": params, "size": [c.plan.width, c.plan.height],

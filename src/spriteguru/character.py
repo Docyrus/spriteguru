@@ -200,7 +200,7 @@ async def generate_turnaround(project: Project, hub: ProviderHub, name: str, *, 
         rec = await describe_from_image(project, hub, name, job=job, keep_mirrorable=True)
     from_image = bool(rec.source_image)
     prompt = prompts.turnaround(rec.description, rec.style, kind=rec.kind, from_image=from_image, blend=rec.blend)
-    model = registry.model_for("turnaround")
+    model = registry.image_model("turnaround", project.config.settings.image_models)
     params = dict(registry.model(model)["params"])
     params.pop("n", None)
     size = EFFECT_SIZE if rec.kind == "effect" else TURNAROUND_SIZE

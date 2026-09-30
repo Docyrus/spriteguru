@@ -197,16 +197,17 @@ def cell_canvas(sheet: Image.Image, compiled, idx: int):
 
 
 async def _cell_edit(hub, compiled, canvas, mask, crop, prompt_text, *, purpose, job, seed):
-    """One guided cell edit; a masked cell that comes back empty (seen live) is retried without the mask."""
+    """One guided cell edit; a masked cell that comes back empty (seen live) is retried without the mask.
+    A model without mask input goes straight to the maskless edit (IM4); only `crop` is used either way."""
     from ..generate import reference_on_key
 
-    model = registry.model_for(purpose)
+    model = compiled.models.get(purpose) or registry.model_for(purpose)
     params = {k: v for k, v in registry.model(model)["params"].items() if k != "n"}
     images = [_png(canvas)]
     if compiled.reference is not None:
         images.append(reference_on_key(compiled.reference, compiled.key, (512, 512)))
     retried, out, cands = False, None, None
-    for use_mask in (True, False):
+    for use_mask in ((True, False) if registry.supports_mask(model) else (False,)):
         req = ProviderRequest(op="edit", model=model, prompt=prompt_text, params=params, images=images,
                               mask=_png(mask) if use_mask else None, n=1, size=canvas.size, seed=seed,
                               purpose=purpose)
