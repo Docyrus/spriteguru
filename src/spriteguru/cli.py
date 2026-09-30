@@ -343,6 +343,8 @@ def models(set_: Optional[list[str]] = typer.Option(None, "--set", help="task=mo
             con.print(f"[red]{e}[/red]")
             raise typer.Exit(2)
         chosen[task.strip()] = model_id.strip()
+    # only choices that differ from a task's default are stored, as in the studio, so defaults can move
+    chosen = {t: m for t, m in chosen.items() if m != registry.model_for(t)}
     if set_ or reset:
         proj.config.settings.image_models = chosen
         proj.save()

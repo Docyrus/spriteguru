@@ -57,6 +57,11 @@ def test_image_models_fal(rec, work):
         rec.check(S, "CLI sets a model per task; unset tasks keep their default", r["models"] == {
             "guided_sheet": "flux-2-max", "turnaround": "seedream-5.0-flash", "repair": "seedream-5.0-pro",
             "inbetween": "gpt-image-2.5-sunburst"} and r["available"] == MODELS, r["models"], ["IM1"])
+        sk("models", "--set", "inbetween=gpt-image-2.5-sunburst", "--project", str(proj))  # the default: not stored
+        stored = json.loads((proj / "project.json").read_text())["settings"]["image_models"]
+        rec.check(S, "CLI stores only choices that differ from a task's default",
+                  stored == {"turnaround": "seedream-5.0-flash", "guided_sheet": "flux-2-max", "repair": "seedream-5.0-pro"},
+                  stored, ["IM1"])
         bad = sk("models", "--set", "guided_sheet=dall-e-3", "--project", str(proj), check=False)
         rec.check(S, "CLI refuses an unknown model and lists the allowed ones",
                   bad["code"] == 2 and "seedream-5.0-lite" in bad["stderr"], bad["code"], ["IM2"])
