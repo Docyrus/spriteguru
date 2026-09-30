@@ -281,6 +281,7 @@ def register(crops: list[Crop], *, loop: bool, harmonics: list[int] | None = Non
     # the measures assume an upright body: frames wider than tall (lying, sprawled) are left out
     upright = np.array([(lambda ys, xs: (xs.max() - xs.min()) <= (ys.max() - ys.min()) * 1.1)
                         (*np.nonzero(m)) if m.any() else False for m in masks])
+    upright &= (meas > 0).all(1)  # R14: a speck or sliver has no measures; it is never judged or resized
     # R13: with a choreography, only poses the measures can read (standing, nothing raised into the head band)
     judged = True
     if measurable is not None and len(measurable) == n:
