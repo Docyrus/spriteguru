@@ -13,6 +13,21 @@ ground line, chroma key, pose per frame), so the analyzer knows what the image s
 Everything after generation is a pure function of pixels plus spec: deterministic, testable and
 free to re-run. The design is in [docs/implementation-plan.md](docs/implementation-plan.md).
 
+## Install the macOS app
+
+A signed and notarized `SpriteGuru-<version>-arm64.dmg` for Macs with Apple silicon (M1 or later)
+on macOS 14 Sonoma or newer will be published on [Releases](https://github.com/Docyrus/spriteguru/releases).
+Until then, build it yourself from a checkout with `packaging/make_dmg.sh` (see
+[Desktop build](#desktop-build)), open the DMG and drag SpriteGuru into Applications.
+
+A self-built app is signed ad hoc, not notarized: it opens on the Mac that built it, but on another
+Mac the first launch is blocked with a message that macOS can't verify it. Open it once, then go to
+System Settings > Privacy & Security, click Open Anyway next to SpriteGuru and confirm (or run
+`xattr -dr com.apple.quarantine /Applications/SpriteGuru.app`).
+
+The command line isn't installed with the app; to script it, run from a checkout (below) or call the
+bundled engine directly: `/Applications/SpriteGuru.app/Contents/Resources/engine/spriteguru-engine --help`.
+
 ## Requirements
 
 SpriteGuru is developed and tested on macOS. The engine and studio are cross-platform Python and
@@ -272,12 +287,14 @@ The golden fixtures in `tests/golden/` regenerate byte-identically with `spriteg
 ### Desktop build
 
 ```bash
-packaging/build_app.sh
+packaging/build_app.sh     # the app
+packaging/make_dmg.sh      # macOS: the app, then dist/SpriteGuru-<version>-<arch>.dmg and its SHA-256
 ```
 
 PyInstaller builds the engine (`spriteguru-engine`) and the launcher. On macOS the result is
-`dist/SpriteGuru.app` (bundle id `com.spriteguru.studio`, engine in `Contents/MacOS/engine/`), and
-the script checks the bundle's name, id and icon; elsewhere the launcher and its `engine/` folder
+`dist/SpriteGuru.app` (bundle id `com.spriteguru.studio`, engine in `Contents/Resources/engine/`), and
+the script checks the bundle's name, id, version, icon and code seal (ad hoc; there is no Developer ID
+signing or notarization yet); elsewhere the launcher and its `engine/` folder
 are in `dist/SpriteGuru/`, and Windows builds use `brand/SpriteGuru.ico`.
 The app doesn't bundle Chromium: vector rendering uses Playwright's headless browser when it's
 installed, else the installed Google Chrome, else it downloads the headless browser once (about

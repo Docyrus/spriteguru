@@ -4,8 +4,12 @@
 # and copy dist/spriteguru-engine into engine/ next to the app executable (build_app.sh does this).
 import os
 import sys
+from importlib.metadata import version
 
 from PyInstaller.utils.hooks import collect_all
+
+VERSION = version("spriteguru")
+MIN_MACOS = "14.0"  # the bundled scipy wheels are built for macOS 14
 
 brand = os.path.join(SPECPATH, "..", "brand")
 datas, binaries, hidden = [], [], []
@@ -24,4 +28,6 @@ exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="SpriteGuru", console=
           icon=os.path.join(brand, "SpriteGuru.ico" if sys.platform == "win32" else "SpriteGuru.icns"))
 coll = COLLECT(exe, a.binaries, a.datas, name="SpriteGuru")
 app = BUNDLE(coll, name="SpriteGuru.app", bundle_identifier="com.spriteguru.studio",
-             icon=os.path.join(brand, "SpriteGuru.icns"))
+             icon=os.path.join(brand, "SpriteGuru.icns"), version=VERSION,
+             info_plist={"CFBundleVersion": VERSION, "LSMinimumSystemVersion": MIN_MACOS,
+                         "NSHighResolutionCapable": True})
