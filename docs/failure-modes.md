@@ -313,3 +313,19 @@ animations, cache content, exports, ledger entries or other authored project ass
 | MG8 | Obsolete cloud refresh tokens stay in the keychain | The first library migration deletes the `refresh_token` and `account` entries of `spriteplay-cloud` and `spriteguru-cloud`, with no sign-out request; provider keys are never touched |
 | MG9 | Studio preferences under `spriteplay.*` browser-storage keys (theme, open animation) are lost | Each is copied to `spriteguru.*` when the canonical key is absent, then removed; existing SpriteGuru values win |
 | MG10 | An old environment variable (`SPRITEKIT_LIBRARY`, `SPRITEKIT_DEV`, …) stops working | `SPRITEGURU_<NAME>` is read first and `SPRITEKIT_<NAME>` is the fallback when it is unset or empty |
+
+## Character-select intro (from a user request)
+
+A character-select intro plays once when the character is picked in a selection lobby. There are
+six, each its own action and animation: `intro` (a heroic fist-raise), `intro-salute` (fist to the
+heart and a bow), `intro-weapon` (brandish the weapon and level it at the opponent), `intro-taunt`
+(a beckoning "come on"), `intro-leap` (a jump into a hero landing) and `intro-powerup` (tense up and
+roar). Each starts and ends near the idle stance, so a game can cut from idle into it and back.
+
+| ID | Failure | Required behaviour |
+| --- | --- | --- |
+| IN1 | An intro is missing from the CLI, API or studio builder, or is offered to vehicles, machines and effects | Intros are character actions only; the builder lists all six for characters as one-shots |
+| IN2 | The game cuts from idle into the intro, or from the intro back to idle, with a visible pop because the intro starts or ends far from the neutral stance | The first and last frames are neutral standing poses close to idle; in the export they are the closest pair of silhouettes involving the first frame |
+| IN3 | The export is evenly timed, so the signature beat flashes by and the last pose never settles | Exported durations follow the choreography: the signature beat is held and the final stance is held longest |
+| IN4 | An intro's signature beat doesn't read, e.g. `intro`'s flourish comes out as a generic idle or a punch | Each intro's signature pose shows in the export's silhouettes: `intro`'s fist overhead is the tallest pose; the salute's bow and the powerup's charge are the lowest; the levelled weapon and the beckoning arm reach furthest forward; the leap's airborne frames keep their lift |
+| IN5 | A west-facing character that can't be mirrored gets its left and right swapped inside other words ("upright" → "upleft", "straightening" → "stleftening", "bright" → "bleft"), so the image model gets garbled instructions | Only the whole words right and left are swapped |

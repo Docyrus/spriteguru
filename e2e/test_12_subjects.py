@@ -1,6 +1,7 @@
 """Subjects beyond characters and image references (docs/failure-modes.md, I1–I8, K1–K13, T9, Q2,
-P12, R12): a tank, a machine and an additive fireball through the guided route in every style, a
-character's fireball throw, and characters seeded from an uploaded image, through the CLI and the API.
+P12, R12, IN1–IN5): a tank, a machine and an additive fireball through the guided route in every style,
+a character's fireball throw and character-select intros, and characters seeded from an uploaded image,
+through the CLI and the API.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import time
 
 import httpx
 import numpy as np
+import pytest
 from PIL import Image
 
 from conftest import free_port, sk
@@ -170,6 +172,67 @@ def test_subject_character_throw(rec, work):
               not j["result"]["accepted"], [c["id"] for c in flagged], ["Q2"])
     rec.check(S, "uniform recolour is re-rolled, not repaired frame by frame",
               any(d["action"] == "reroll" for d in j["decisions"]), [d["action"] for d in j["decisions"]], ["Q2"])
+
+
+# action, choreography, exported durations, facing; each intro starts and ends near the idle stance
+INTROS = [
+    ("intro", "intro.side.8", [180, 110, 90, 220, 160, 80, 110, 300], "E"),
+    ("intro-salute", "intro.salute.side.6", [180, 200, 260, 140, 160, 300], "W"),
+    ("intro-weapon", "intro.weapon.side.8", [160, 110, 80, 200, 70, 280, 120, 300], "E"),
+    ("intro-taunt", "intro.taunt.side.8", [160, 180, 140, 120, 140, 120, 200, 300], "E"),
+    ("intro-leap", "intro.leap.side.8", [150, 120, 80, 140, 80, 260, 140, 300], "E"),
+    ("intro-powerup", "intro.powerup.side.6", [160, 140, 260, 280, 140, 300], "E"),
+]
+
+
+def _intro_signature(action: str, masks: list[np.ndarray], rep: dict) -> tuple[str, bool, object]:
+    """The silhouette cue that tells this intro's signature beat apart (IN4)."""
+    tops = [int(np.nonzero(m.any(1))[0].min()) for m in masks]
+    reach = [int(np.nonzero(m.any(0))[0].max()) for m in masks]
+    height = int(np.nonzero(masks[0].any(1))[0].max()) - tops[0] + 1
+    if action == "intro":
+        rise = round((tops[0] - min(tops)) / height, 3)
+        return "the raised-fist flourish is the tallest pose", int(np.argmin(tops)) in (3, 4) and rise > 0.12, [tops, rise]
+    if action == "intro-salute":
+        return "the bow is the lowest pose", int(np.argmax(tops)) == 2, tops
+    if action == "intro-weapon":
+        ext = round((max(reach) - reach[0]) / height, 3)
+        return "the levelled weapon reaches furthest forward", int(np.argmax(reach)) in (4, 5) and ext > 0.3, [reach, ext]
+    if action == "intro-taunt":
+        return "the beckoning arm reaches furthest forward", int(np.argmax(reach)) in (2, 4), reach
+    if action == "intro-leap":
+        air = [f["airborne"] for f in rep["frames"]]
+        lift = rep["temporal"]["registration"]["lift"]
+        return ("the leap's airborne frames keep their lift", air == [False] * 3 + [True] * 2 + [False] * 3
+                and max(lift[3:5]) > 5, [air, lift])
+    return "the charge is the lowest, most hunched pose", int(np.argmax(tops)) == 2, tops
+
+
+@pytest.mark.parametrize("action,choreo,durations,facing", INTROS, ids=[a for a, *_ in INTROS])
+def test_character_intros(rec, work, action, choreo, durations, facing):
+    S = "subjects-intros"
+    # an asymmetric hero: a west-facing job is generated facing west, not flipped, so its lines are mirrored
+    proj, _ = _subjects(work, f"intros-{action}", (("hero", "character", HERO, ["--asymmetric"]),))
+    j = _gen(proj, "hero", action, "--facing", facing)
+    info = j["steps"][0]["info"]
+    rec.check(S, f"{action}: accepted", j["result"]["accepted"] and info["choreo"] == choreo,
+              [j["result"]["score"], info["choreo"]], ["IN1"])
+    fin = _final(proj, f"hero-{action}-{facing}")
+    anim = json.loads((fin / "animation.json").read_text())
+    rec.check(S, f"{action}: a one-shot with its held beats in the export",
+              not anim["loop"] and anim["durations"] == durations, [anim["loop"], anim["durations"]], ["IN3"])
+    masks = [f[..., 3] >= 128 for f in _frames(fin)]
+    iou = [float((masks[0] & m).sum() / max((masks[0] | m).sum(), 1)) for m in masks]
+    rec.check(S, f"{action}: starts and ends in the neutral stance (first/last the closest pair)",
+              int(np.argmax(iou[1:])) + 1 == len(masks) - 1, [round(v, 3) for v in iou], ["IN2"])
+    name, ok, value = _intro_signature(action, masks, json.loads((fin / "report.json").read_text()))
+    rec.check(S, f"{action}: {name}", ok, value, ["IN4"])
+    if facing == "W":
+        prompt = info["prompt"]["prompt"]
+        rec.check(S, f"{action}: facing west, sides swap as whole words only",
+                  "left fist pressed over the heart" in prompt and "straightening up" in prompt
+                  and "stleft" not in prompt and "upleft" not in prompt, info["prompt"].get("template"), ["IN5"])
+    rec.keep(S, fin / "sheet.png", f"hero-{action}-{facing}.png")
 
 
 def test_image_references(rec, work):
@@ -391,8 +454,9 @@ def test_studio_subjects(rec, work, run_dir):
             expect(page.get_by_test_id("builder-action")).to_have_attribute("data-kind", "character", timeout=10000)
             expect(page.locator("[data-testid=builder-action] option[value='fireball']")).to_have_count(1, timeout=10000)
             opts = page.get_by_test_id("builder-action").locator("option").evaluate_all("els => els.map(e => e.value)")
-            rec.check(S, "studio builder: a character's actions include the fireball throw",
-                      "fireball" in opts and "fire" not in opts, opts)
+            intros = [a for a, *_ in INTROS]
+            rec.check(S, "studio builder: a character's actions include the fireball throw and every intro",
+                      "fireball" in opts and all(a in opts for a in intros) and "fire" not in opts, opts, ["IN1"])
             shot(page, "03-builder-kinds")
             rec.check(S, "no page errors", not errors, errors[:3])
             browser.close()

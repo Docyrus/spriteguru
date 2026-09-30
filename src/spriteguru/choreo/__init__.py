@@ -116,8 +116,11 @@ def _lerp_pose(a: dict, b: dict, u: float) -> dict:
 
 
 def _swap_sides(text: str) -> str:
-    return (text.replace("right", "\0").replace("left", "right").replace("\0", "left")
-            .replace("Right", "\0").replace("Left", "Right").replace("\0", "Left"))
+    """Mirror whole words only: "upright", "bright" and "straightening" keep their letters (IN5)."""
+    import re
+
+    swap = {"right": "left", "left": "right", "Right": "Left", "Left": "Right"}
+    return re.sub(r"\b(right|left|Right|Left)\b", lambda m: swap[m.group(1)], text)
 
 
 # K17: exhaust (steam, smoke) in object motion is decoration the description has to ask for

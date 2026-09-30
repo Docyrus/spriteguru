@@ -144,7 +144,7 @@ are generated on black, matted by luminance and exported with `blend: add`.
 
 | Kind | Actions |
 | --- | --- |
-| character | walk, run, idle, jump, attack-melee, cast, hurt, death, crouch, climb, push, fireball |
+| character | walk, run, idle, jump, attack-melee, cast, hurt, death, crouch, climb, push, fireball, intro, intro-salute, intro-weapon, intro-taunt, intro-leap, intro-powerup |
 | vehicle | idle, move, fire, destroyed |
 | machine | work, activate, break |
 | effect | projectile, charge, impact, explosion, aura |

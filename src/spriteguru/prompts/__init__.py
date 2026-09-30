@@ -83,7 +83,15 @@ def action_title(action: str, kind: str = "character") -> str:
         "character": {"walk": "a walk cycle", "run": "a run cycle", "idle": "an idle breathing loop", "jump": "a jump",
                       "attack-melee": "a melee sword attack", "cast": "a spell cast", "hurt": "a hurt reaction",
                       "death": "a death", "crouch": "a crouch", "climb": "a climbing cycle",
-                      "push": "a pushing cycle", "fireball": "a two-handed energy projectile throw"},
+                      "push": "a pushing cycle", "fireball": "a two-handed energy projectile throw",
+                      "intro": "a character-select intro: a heroic flourish that settles into a confident stance",
+                      "intro-salute": "a character-select intro: an honourable salute and bow that rises into a "
+                                      "confident stance",
+                      "intro-weapon": "a character-select intro: brandishing the weapon and levelling it at the opponent",
+                      "intro-taunt": "a character-select intro: a cocky beckoning taunt",
+                      "intro-leap": "a character-select intro: a leap into a hero landing that rises into a "
+                                    "confident stance",
+                      "intro-powerup": "a character-select intro: tensing up and bursting with power in a roar"},
         "vehicle": {"idle": "an idling loop", "move": "a driving loop in place", "fire": "firing the main gun",
                     "destroyed": "being destroyed"},
         "machine": {"work": "a working loop", "activate": "powering up", "break": "breaking down"},

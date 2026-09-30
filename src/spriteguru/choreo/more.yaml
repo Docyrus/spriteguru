@@ -93,3 +93,122 @@ fireball.side.6:
       pose: {hip_n: 38, knee_n: 30, hip_f: -34, knee_f: 6, shoulder_n: 88, elbow_n: 0, shoulder_f: 84, elbow_f: 2, lean: 16}
     - line: "Recover: pulling back into the fighting stance."
       pose: {hip_n: 26, knee_n: 20, hip_f: -22, knee_f: 14, shoulder_n: 40, elbow_n: 100, shoulder_f: 36, elbow_f: 104, lean: 6}
+# Character-select intro: plays once when the character is picked. It starts from a pose close to
+# idle's neutral stance and ends in one, so the game can cut from idle into it and back out.
+intro.side.8:
+  loop: false
+  timing_ms: [180, 110, 90, 220, 160, 80, 110, 300]
+  frames:
+    - line: "Poised: standing at ease, arms relaxed at the sides, head bowed."
+      pose: {hip_n: 5, knee_n: 4, hip_f: -5, knee_f: 4, shoulder_n: -4, elbow_n: 12, shoulder_f: 6, elbow_f: 14, lean: 3, head: 16}
+    - line: "Gather: sinking into the knees, right fist pulled back to the hip, left fist closing in front of the chest, eyes lifting."
+      pose: {hip_n: 28, knee_n: 46, ankle_n: 12, hip_f: -16, knee_f: 30, ankle_f: 6, shoulder_n: -36, elbow_n: 100, shoulder_f: 34, elbow_f: 112, lean: 10, head: 0}
+    - line: "Rise: pushing up off the bent legs, right fist swinging up past the face."
+      pose: {hip_n: 14, knee_n: 14, hip_f: -12, knee_f: 10, shoulder_n: 110, elbow_n: 60, shoulder_f: 24, elbow_f: 104, lean: 0, head: -6}
+    - line: "Flourish: standing tall, right fist thrust straight up overhead, left fist at the chest, chest out, chin raised."
+      pose: {hip_n: 10, knee_n: 4, hip_f: -14, knee_f: 4, shoulder_n: 172, elbow_n: 6, shoulder_f: 28, elbow_f: 118, lean: -6, head: -12}
+    - line: "Power: right fist still high, knees flexing, left arm swept down and back, shouting."
+      pose: {hip_n: 18, knee_n: 16, hip_f: -18, knee_f: 12, shoulder_n: 164, elbow_n: 14, shoulder_f: -36, elbow_f: 18, lean: -8, head: -14}
+    - line: "Swing: right fist sweeping down and forward in a wide arc, right foot stepping out."
+      pose: {hip_n: 30, knee_n: 18, ankle_n: 4, hip_f: -22, knee_f: 8, shoulder_n: 80, elbow_n: 20, shoulder_f: -20, elbow_f: 30, lean: 10, head: 0}
+    - line: "Plant: right foot stamps down, knees bent, both fists pulled in low in front of the body."
+      pose: {hip_n: 24, knee_n: 30, ankle_n: 8, hip_f: -20, knee_f: 22, ankle_f: -2, shoulder_n: 20, elbow_n: 70, shoulder_f: 14, elbow_f: 76, lean: 8, head: 2}
+    - line: "Ready: standing tall and planted, arms relaxed at the sides, chin up, looking ahead with confidence."
+      pose: {hip_n: 10, knee_n: 5, hip_f: -10, knee_f: 5, shoulder_n: -4, elbow_n: 18, shoulder_f: 8, elbow_f: 20, lean: 0, head: -4}
+# More character-select intros; like `intro`, each starts and ends close to idle's neutral stance.
+intro.salute.side.6:
+  loop: false
+  timing_ms: [180, 200, 260, 140, 160, 300]
+  frames:
+    - line: "Poised: standing at ease, arms relaxed at the sides, looking ahead."
+      pose: {hip_n: 5, knee_n: 4, hip_f: -5, knee_f: 4, shoulder_n: -4, elbow_n: 12, shoulder_f: 6, elbow_f: 14, lean: 1}
+    - line: "Salute: heels together, chest out, right fist pressed over the heart, chin raised."
+      pose: {hip_n: 1, knee_n: 1, hip_f: -1, knee_f: 1, shoulder_n: 0, elbow_n: 130, shoulder_f: 2, elbow_f: 6, lean: -4, head: -8}
+    - line: "Bow: bending forward from the waist, head lowered, right fist still over the heart, left arm hanging straight."
+      pose: {hip_n: 1, knee_n: 2, hip_f: -1, knee_f: 2, shoulder_n: 0, elbow_n: 130, shoulder_f: -34, elbow_f: 6, lean: 38, head: 22}
+    - line: "Rise: straightening up from the bow, right fist leaving the chest, eyes on the opponent."
+      pose: {hip_n: 4, knee_n: 3, hip_f: -4, knee_f: 3, shoulder_n: 40, elbow_n: 90, shoulder_f: -6, elbow_f: 10, lean: 10, head: 2}
+    - line: "Flourish: standing tall, right arm sweeping out forward and down with the hand open, chest out."
+      pose: {hip_n: 10, knee_n: 4, hip_f: -12, knee_f: 4, shoulder_n: 60, elbow_n: 8, shoulder_f: 4, elbow_f: 14, lean: -4, head: -6}
+    - line: "Ready: standing tall and planted, arms relaxed at the sides, chin up, looking ahead with confidence."
+      pose: {hip_n: 10, knee_n: 5, hip_f: -10, knee_f: 5, shoulder_n: -4, elbow_n: 18, shoulder_f: 8, elbow_f: 20, lean: 0, head: -4}
+intro.weapon.side.8:
+  loop: false
+  props: [weapon]
+  impact: 6
+  timing_ms: [160, 110, 80, 200, 70, 280, 120, 300]
+  frames:
+    - line: "Rest: standing at ease, weapon held low in the right hand, tip toward the ground."
+      pose: {hip_n: 5, knee_n: 4, hip_f: -5, knee_f: 4, shoulder_n: -4, elbow_n: 14, shoulder_f: 6, elbow_f: 14, lean: 1, head: 4, weapon: 160}
+    - line: "Wind-up: knees bending, right arm swinging back, weapon trailing low behind."
+      pose: {hip_n: 22, knee_n: 26, ankle_n: 6, hip_f: -16, knee_f: 18, shoulder_n: -40, elbow_n: 20, shoulder_f: 20, elbow_f: 40, lean: 8, weapon: -150}
+    - line: "Upswing: weapon sweeping forward and up in a wide arc in front of the body."
+      pose: {hip_n: 16, knee_n: 14, hip_f: -14, knee_f: 10, shoulder_n: 100, elbow_n: 20, shoulder_f: 10, elbow_f: 40, lean: 0, head: -4, weapon: 30}
+    - line: "Brandish: weapon raised high overhead, pointing at the sky, chin up."
+      pose: {hip_n: 10, knee_n: 4, hip_f: -14, knee_f: 4, shoulder_n: 170, elbow_n: 10, shoulder_f: 20, elbow_f: 60, lean: -6, head: -10, weapon: -5}
+    - line: "Cut: weapon slicing down in front in a fast arc, right foot stepping in."
+      pose: {hip_n: 30, knee_n: 24, ankle_n: 6, hip_f: -24, knee_f: 8, shoulder_n: 110, elbow_n: 10, shoulder_f: 0, elbow_f: 40, lean: 10, weapon: 120}
+    - line: "Point: right arm fully extended, weapon levelled straight at the opponent, feet planted wide."
+      pose: {hip_n: 34, knee_n: 26, ankle_n: 6, hip_f: -28, knee_f: 6, ankle_f: -8, shoulder_n: 90, elbow_n: 0, shoulder_f: -20, elbow_f: 40, lean: 12, head: -2, weapon: 90}
+    - line: "Lower: drawing back up, weapon tip dropping toward the ground."
+      pose: {hip_n: 20, knee_n: 12, hip_f: -16, knee_f: 8, shoulder_n: 30, elbow_n: 30, shoulder_f: 6, elbow_f: 20, lean: 4, weapon: 150}
+    - line: "Ready: standing tall and planted, weapon held low in the right hand, tip down, chin up."
+      pose: {hip_n: 10, knee_n: 5, hip_f: -10, knee_f: 5, shoulder_n: -4, elbow_n: 18, shoulder_f: 8, elbow_f: 20, lean: 0, head: -4, weapon: 165}
+intro.taunt.side.8:
+  loop: false
+  timing_ms: [160, 180, 140, 120, 140, 120, 200, 300]
+  frames:
+    - line: "Poised: standing at ease, arms relaxed at the sides, looking ahead."
+      pose: {hip_n: 5, knee_n: 4, hip_f: -5, knee_f: 4, shoulder_n: -4, elbow_n: 12, shoulder_f: 6, elbow_f: 14, lean: 1}
+    - line: "Swagger: leaning back on the rear foot, chin up, looking down at the opponent, arms loose."
+      pose: {hip_n: 16, knee_n: 4, hip_f: -8, knee_f: 14, shoulder_n: -14, elbow_n: 20, shoulder_f: 10, elbow_f: 20, lean: -10, head: -10}
+    - line: "Beckon: right arm reaching toward the opponent, palm up."
+      pose: {hip_n: 18, knee_n: 6, hip_f: -10, knee_f: 12, shoulder_n: 80, elbow_n: 10, shoulder_f: 0, elbow_f: 30, lean: -4, head: -6}
+    - line: "Come on: right hand curling back toward the body, fingers beckoning."
+      pose: {hip_n: 18, knee_n: 6, hip_f: -10, knee_f: 12, shoulder_n: 66, elbow_n: 80, shoulder_f: 0, elbow_f: 30, lean: -6, head: -6}
+    - line: "Beckon again: right arm reaching out once more, palm up, a confident smirk."
+      pose: {hip_n: 18, knee_n: 6, hip_f: -10, knee_f: 12, shoulder_n: 84, elbow_n: 14, shoulder_f: 0, elbow_f: 30, lean: -4, head: -8}
+    - line: "Come on again: right hand curling back, fingers beckoning."
+      pose: {hip_n: 18, knee_n: 6, hip_f: -10, knee_f: 12, shoulder_n: 62, elbow_n: 88, shoulder_f: 0, elbow_f: 30, lean: -6, head: -8}
+    - line: "Challenge: stepping in, right fist smacking into the open left palm in front of the chest."
+      pose: {hip_n: 22, knee_n: 16, hip_f: -16, knee_f: 12, shoulder_n: 50, elbow_n: 90, shoulder_f: 50, elbow_f: 84, lean: 8}
+    - line: "Ready: standing tall and planted, arms relaxed at the sides, chin up, looking ahead with confidence."
+      pose: {hip_n: 10, knee_n: 5, hip_f: -10, knee_f: 5, shoulder_n: -4, elbow_n: 18, shoulder_f: 8, elbow_f: 20, lean: 0, head: -4}
+intro.leap.side.8:
+  loop: false
+  airborne: [4, 5]
+  apex: 4
+  timing_ms: [150, 120, 80, 140, 80, 260, 140, 300]
+  frames:
+    - line: "Poised: standing at ease, arms relaxed at the sides, looking ahead."
+      pose: {hip_n: 5, knee_n: 4, hip_f: -5, knee_f: 4, shoulder_n: -4, elbow_n: 12, shoulder_f: 6, elbow_f: 14, lean: 1}
+    - line: "Crouch: deep squat, arms swung back, ready to spring."
+      pose: {hip_n: 70, knee_n: 118, ankle_n: 30, hip_f: 64, knee_f: 112, ankle_f: 30, shoulder_n: -55, elbow_n: 10, shoulder_f: -50, elbow_f: 12, lean: 34}
+    - line: "Take-off: legs extending, arms swinging up, toes leaving the ground."
+      pose: {hip_n: 2, knee_n: 4, ankle_n: -40, hip_f: -4, knee_f: 6, ankle_f: -42, shoulder_n: 150, elbow_n: 10, shoulder_f: 140, elbow_f: 12, lean: 6}
+    - line: "Airborne: high in the air, knees tucked, arms raised."
+      pose: {hip_n: 60, knee_n: 96, ankle_n: -10, hip_f: 54, knee_f: 92, ankle_f: -12, shoulder_n: 150, elbow_n: 20, shoulder_f: 140, elbow_f: 24, lean: 8, air: 0.28}
+    - line: "Dropping: legs reaching down, right fist raised high, ready to strike the ground."
+      pose: {hip_n: 30, knee_n: 30, ankle_n: 10, hip_f: -10, knee_f: 20, ankle_f: 6, shoulder_n: 120, elbow_n: 30, shoulder_f: 60, elbow_f: 20, lean: 10, air: 0.12}
+    - line: "Hero landing: slammed down on the left knee, right foot planted in front, right fist on the ground, head down."
+      pose: {hip_n: 80, knee_n: 80, ankle_n: 0, hip_f: -10, knee_f: 90, ankle_f: -60, shoulder_n: -45, elbow_n: 4, shoulder_f: -100, elbow_f: 10, lean: 45, head: 20}
+    - line: "Rise: pushing up from the ground, chin lifting."
+      pose: {hip_n: 40, knee_n: 60, ankle_n: 16, hip_f: -10, knee_f: 40, shoulder_n: 10, elbow_n: 30, shoulder_f: -10, elbow_f: 30, lean: 20}
+    - line: "Ready: standing tall and planted, arms relaxed at the sides, chin up, looking ahead with confidence."
+      pose: {hip_n: 10, knee_n: 5, hip_f: -10, knee_f: 5, shoulder_n: -4, elbow_n: 18, shoulder_f: 8, elbow_f: 20, lean: 0, head: -4}
+intro.powerup.side.6:
+  loop: false
+  timing_ms: [160, 140, 260, 280, 140, 300]
+  frames:
+    - line: "Poised: standing at ease, arms relaxed at the sides, looking ahead."
+      pose: {hip_n: 5, knee_n: 4, hip_f: -5, knee_f: 4, shoulder_n: -4, elbow_n: 12, shoulder_f: 6, elbow_f: 14, lean: 1}
+    - line: "Brace: feet sliding wide, knees bending, fists clenched at the hips."
+      pose: {hip_n: 26, knee_n: 30, ankle_n: 8, hip_f: -24, knee_f: 26, ankle_f: -4, shoulder_n: -20, elbow_n: 90, shoulder_f: -16, elbow_f: 90, lean: 6, head: 6}
+    - line: "Charge: hunched low and trembling with gathered power, fists clenched in front of the stomach, head down."
+      pose: {hip_n: 30, knee_n: 40, ankle_n: 10, hip_f: -26, knee_f: 34, shoulder_n: -10, elbow_n: 100, shoulder_f: -6, elbow_f: 100, lean: 18, head: 16}
+    - line: "Burst: straightening explosively, arms flung down and back, chest thrust out, head thrown back in a roar."
+      pose: {hip_n: 16, knee_n: 10, hip_f: -20, knee_f: 8, shoulder_n: -44, elbow_n: 10, shoulder_f: -38, elbow_f: 12, lean: -8, head: -16}
+    - line: "Settle: breathing out, arms swinging forward, fists loosening."
+      pose: {hip_n: 14, knee_n: 8, hip_f: -14, knee_f: 6, shoulder_n: 10, elbow_n: 40, shoulder_f: 6, elbow_f: 40, lean: 2, head: -4}
+    - line: "Ready: standing tall and planted, arms relaxed at the sides, chin up, looking ahead with confidence."
+      pose: {hip_n: 10, knee_n: 5, hip_f: -10, knee_f: 5, shoulder_n: -4, elbow_n: 18, shoulder_f: 8, elbow_f: 20, lean: 0, head: -4}
