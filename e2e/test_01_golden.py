@@ -11,7 +11,7 @@ from conftest import ROOT, sk
 
 ANALYZER_MODES = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M11", "L1", "L2", "L3", "L4", "L5", "L6",
                   "L7", "L8", "L10", "L11", "L12", "R1", "R2", "R3", "R4", "R6", "R7", "R8", "R9", "X1", "X2", "X3",
-                  "X4", "X5", "X6", "X7", "X8", "T1", "T2", "T3", "T4", "T5", "T6", "T7"]
+                  "X4", "X5", "X6", "X7", "X8", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "R13", "T10"]
 
 
 def _tree_hash(d: Path) -> dict[str, str]:

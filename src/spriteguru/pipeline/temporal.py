@@ -365,11 +365,18 @@ def analyze(frames: list[np.ndarray], *, loop: bool, action: str, sprite_h: floa
     if apex is not None and lift is not None and n >= 3:
         lf = np.array([lift[i] for i in order])
         peak = int(np.argmax(lf))
-        rises = int(np.sum(np.diff(np.sign(np.diff(lf))) < 0))
+        # T10: a grounded frame a few pixels off the line is not a second jump
+        tol = max(2.0, 0.04 * sprite_h)
+        moves = [float(np.sign(d)) for d in np.diff(lf) if abs(d) > tol]
+        rises = sum(1 for a, b in zip(moves, moves[1:]) if a > 0 > b)
         checks["apex"] = peak
-        if abs(peak - apex) > 1 or rises > 1:
+        if abs(peak - apex) > 1:
             findings.append(Finding(metric="pose", level="warn", severity=2, frames=[peak], value=peak + 1,
                                     threshold=apex + 1, message=f"jump apex at frame {peak + 1}, expected {apex + 1}",
+                                    remedy="pose_fix"))
+        elif rises > 1:
+            findings.append(Finding(metric="pose", level="warn", severity=2, frames=[peak], value=rises, threshold=1,
+                                    message=f"the body rises {rises} times; a jump has one apex (frame {apex + 1})",
                                     remedy="pose_fix"))
     return Temporal(D, order, reordered, dups, gaps, smooth, seam, gait, checks, findings)
 

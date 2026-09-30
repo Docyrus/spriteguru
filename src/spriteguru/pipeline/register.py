@@ -224,7 +224,8 @@ def scale_measures(mask: np.ndarray) -> tuple[float, float, float]:
 def register(crops: list[Crop], *, loop: bool, harmonics: list[int] | None = None, pixel: bool = False,
              top_down: bool = False, reference: np.ndarray | None = None, mirrorable: bool = True,
              root_motion: bool = False, correct_scale: bool = True, mode: str = "character",
-             expected: list[tuple[float, float]] | None = None) -> Aligned:
+             expected: list[tuple[float, float]] | None = None, measurable: list[bool] | None = None) -> Aligned:
+    """`measurable`: per frame, whether its choreographed pose is one the scale measures can read (R13)."""
     if mode in ("rigid", "effect"):
         return register_rigid(crops, mode=mode, expected=expected, pixel=pixel, reference=reference,
                               mirrorable=mirrorable, loop=loop)
@@ -280,12 +281,20 @@ def register(crops: list[Crop], *, loop: bool, harmonics: list[int] | None = Non
     # the measures assume an upright body: frames wider than tall (lying, sprawled) are left out
     upright = np.array([(lambda ys, xs: (xs.max() - xs.min()) <= (ys.max() - ys.min()) * 1.1)
                         (*np.nonzero(m)) if m.any() else False for m in masks])
+    # R13: with a choreography, only poses the measures can read (standing, nothing raised into the head band)
+    judged = True
+    if measurable is not None and len(measurable) == n:
+        upright &= np.array(measurable, bool)
+        judged = upright.sum() >= 2
     ref_meas = np.median(meas[upright], 0) if upright.sum() >= 2 else np.median(meas, 0)
     ratios = meas / np.maximum(ref_meas, 1e-6)
     est = np.median(ratios, 1)
     est_u = est[upright] if upright.sum() >= 2 else est
-    scale_cv = float(np.std(est_u) / max(np.mean(est_u), 1e-6))
-    if not pixel and correct_scale:
+    scale_cv = float(np.std(est_u) / max(np.mean(est_u), 1e-6)) if judged else 0.0
+    if not judged:
+        findings.append(Finding(metric="scale", level="info", message="scale not judged: fewer than two upright "
+                                                                      "frames the measures can read"))
+    if not pixel and correct_scale and judged:
         for i in range(n):
             spread = float(ratios[i].max() - ratios[i].min())
             same_side = bool(np.all(ratios[i] > 1.02) or np.all(ratios[i] < 0.98))

@@ -69,6 +69,10 @@ CASES: list[Case] = [
     Case("baseline-jitter", ["R1", "R2", "R6"], degrade={"jitter": 0.03}, expect={"no_fail": True}),
     Case("jump-airborne", ["R4"], action="jump", frames=6, cols=3, expect={"no_fail": True, "lift": True}),
     Case("scale-drift", ["R7", "R9"], extras={"scale": (3, 0.07)}, expect={"findings": ["scale"]}),
+    # a leap intro drawn with a shield and bulky gauntlets: raised fists, a tuck and a kneel fake scale drift, and a
+    # grounded frame a pixel off the line fakes a second rise
+    Case("leap-gauntlets", ["R13", "T10"], action="intro-leap", frames=8, cols=4, rows=2,
+         extras={"shield": True, "gauntlets": 3.0}, expect={"no_fail": True, "lift": True, "absent": ["scale", "pose"]}),
     Case("flipped-frame", ["R8"], action="attack-melee", frames=6, cols=3, cell=(360, 352), extras={"flip": 2},
          expect={"findings": ["facing"]}),
     Case("shuffled", ["T1"], action="crouch", frames=6, cols=3, strip=False, guided=False,
@@ -122,7 +126,7 @@ def build(case: Case) -> tuple[Image.Image, dict]:
     ex = case.extras
     ch = choreo_lib.choreography(case.action, case.frames)
     prop = Proportions(4.0 if case.style == "pixel" else 5.0)
-    props = Props(weapon="weapon" in ch.props, shield=case.id == "flipped-frame")
+    props = Props(weapon="weapon" in ch.props, shield=case.id == "flipped-frame" or bool(ex.get("shield")))
     skin = character_skin(case.seed + 7)
     if case.style == "pixel":
         skin.outline_w = 1.0 / case.pixel_height  # one logical pixel
@@ -153,6 +157,11 @@ def build(case: Case) -> tuple[Image.Image, dict]:
         a, b = ex["duplicate"]
         poses[a] = dict(poses[b])
     parts_all = [skeleton(p, prop, "side", "E", props) for p in poses]
+    if ex.get("gauntlets"):  # bulky armoured hands, as image models draw them (R13)
+        for pp in parts_all:
+            for part in pp:
+                if part.name.startswith("hand"):
+                    part.width *= ex["gauntlets"]
     tops = [bounds(pp)[3] for pp in parts_all]
     xmin = min(bounds(pp)[0] for pp in parts_all)
     xmax = max(bounds(pp)[2] for pp in parts_all)

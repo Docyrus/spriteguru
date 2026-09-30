@@ -69,6 +69,19 @@ def durations_for(spec: SpriteSpec | None, n: int, ch: choreo_lib.Choreo | None)
     return [int(round(1000 / max(1, spec.fps)))] * n
 
 
+def scale_measurable(spec: SpriteSpec | None, ch: choreo_lib.Choreo | None) -> list[bool] | None:
+    """Per choreography frame, whether its pose is one the scale measures can read (R13)."""
+    if spec is None or ch is None or ch.mode != "skeleton":
+        return None
+    from ..figure import bounds, skeleton
+    from ..figure import scale_measurable as measurable
+    from ..guide import proportions, props_for
+
+    prop, props = proportions(spec), props_for(ch)
+    standing = bounds(skeleton({}, prop, spec.view, spec.facing, props))[3]
+    return [measurable(skeleton(f.pose, prop, spec.view, spec.facing, props), f.pose, standing) for f in ch.frames]
+
+
 def analyze(image, spec: SpriteSpec | None = None, *, guide: GuideInfo | None = None,
             reference: np.ndarray | None = None, prior: layout_mod.Prior | None = None,
             grid: tuple[int, int] | None = None) -> Analysis:
@@ -131,6 +144,8 @@ def analyze(image, spec: SpriteSpec | None = None, *, guide: GuideInfo | None = 
 
         removed = _nd.binary_dilation(removed, iterations=2) & ~_nd.binary_erosion(lay.clean_mask, iterations=1)
     crops = []
+    poses_measurable = scale_measurable(spec, ch) if ch and len(ch.frames) == len(lay.frames) else None
+    measurable = [poses_measurable[f.index] for f in lay.frames] if poses_measurable else None
     for f in lay.frames:
         region_mask = (lay.labels == f.label) & ~removed
         x0, y0, x1, y1 = f.box
@@ -166,7 +181,7 @@ def analyze(image, spec: SpriteSpec | None = None, *, guide: GuideInfo | None = 
                                top_down=bool(spec and spec.view == "top-down"), reference=ref_for_facing,
                                mirrorable=spec.character.mirrorable if spec else True,
                                root_motion=bool(spec and spec.motion == "root-motion"), mode=reg_mode,
-                               expected=guide.expected if guide is not None else None)
+                               expected=guide.expected if guide is not None else None, measurable=measurable)
     timings["register"] = time.perf_counter() - t3
     findings += aligned.findings
 

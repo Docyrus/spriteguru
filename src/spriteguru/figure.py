@@ -290,6 +290,26 @@ def bounds(parts: list[Part]) -> tuple[float, float, float, float]:
     return min(xs), min(ys), max(xs), max(ys)
 
 
+def scale_measurable(parts: list[Part], pose: dict, standing_top: float) -> bool:
+    """Whether the silhouette scale measures (head width in the top 12%, torso thickness, head to hip)
+    can read this pose (R13): on the ground, at least 90% of full height, and no arm or prop reaching
+    into the head band. Raised fists, weapons overhead, squats, tucks and kneels are not. A thin
+    weapon beside the head barely changes the head width; it only matters once it is the highest point."""
+    air = pose_full(pose)["air"]
+    top = bounds(parts)[3]
+    if air > 0.01 or top - air < 0.9 * standing_top:
+        return False
+    band = top - 0.12 * (top - air)
+    head = next(p for p in parts if p.name == "head")
+    head_top = head.points[0][1] + head.width / 2
+    for part in parts:
+        if part.cls in ("near", "far", "prop") and not part.name.startswith(("leg", "foot")):
+            r = part.width / 2 if part.kind != "polygon" else 0.0
+            if max(pt[1] for pt in part.points) + r > (head_top if part.name == "weapon" else band):
+                return False
+    return True
+
+
 def render(parts: list[Part], height_px: float, skin: Skin = MANNEQUIN, *, facing: str = "E",
            ss: int = 4, margin_px: int = 4, view: str = "side",
            crisp: bool = False) -> tuple[Image.Image, tuple[float, float]]:

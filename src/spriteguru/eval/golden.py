@@ -153,6 +153,9 @@ def run_case(case_dir: Path, out_dir: Path) -> dict:
     exp = truth["expect"]
     for m in exp.get("findings", []):
         check(f"finding:{m}", m in fid, [f.message for f in rep.findings if f.metric == m][:2], truth["covers"])
+    for m in exp.get("absent", []):  # no warning or failure of this metric, auto-fixed or not
+        hits = [f.message for f in rep.findings if f.metric == m and f.level != "info"]
+        check(f"no_finding:{m}", not hits, hits[:2], truth["covers"])
     if exp.get("no_fail"):
         fails = [f"{f.metric}: {f.message}" for f in rep.findings if f.level == "fail" and not f.auto_fixed]
         check("no_fail_findings", not fails, fails, truth["covers"])
