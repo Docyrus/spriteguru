@@ -36,7 +36,9 @@ silently. Treat every live command as a purchase:
   (`needs approval <model> ~$0.xxx: <reason>`) is the price tag: show it to the user and let them decide.
 - **Cost preview for video loops (free):** run `gen` without `--yes` and with no terminal on stdin
   (`</dev/null`). A video route stops at the approval, prints the estimate, exits 1 and spends nothing.
-  Other routes have no preview; expect cents per animation and check `spriteguru ledger` afterwards.
+  Other routes have no preview. On the default GPT Image models expect cents per animation (about $0.11 per
+  guided sheet); a project switched to FLUX.2 [max] pays about $0.50 per sheet. Check `spriteguru models`
+  before a live run and `spriteguru ledger` afterwards.
 - `gen --replay` never calls a provider; it rebuilds from cached candidates and fails with `ReplayMiss`
   if there are none. To get a genuinely new result, change `--seed` (this bills again in live mode);
   do not delete `cache/`.
@@ -105,6 +107,11 @@ spriteguru gen knight attack-melee --frames 6 --facing W
 - **Facing and layout**: `--facing E|W|N|S` (side view uses E and W), `--view side|top-down`,
   `--frames N`, `--loop/--no-loop`, `--motion in-place|root-motion`. Use `--asymmetric` when a subject
   can't be mirrored for the other facing (text, one-sided props).
+- **Image models**: sprite sheets, turnarounds, frame repairs and in-betweens each use an image model,
+  GPT Image 2.5 (OpenAI) by default. `spriteguru models` lists them with maker and price; the project can
+  switch a task to Seedream 5.0 Flash, Pro or Lite or FLUX.2 [max], which run on fal and bill the fal key.
+  Switching changes cost and quality, so, like the caps, it is the user's call: don't `models --set` on
+  your own. A job keeps the models it started with.
 - Details on every command and option: `references/commands.md`.
 
 ## Reading a result and iterating

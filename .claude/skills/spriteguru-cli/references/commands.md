@@ -5,13 +5,14 @@ Every command takes `--project/-p <folder>` (except `init`, `keys`, `analyze`, `
 
 `--mode live|synthetic` (overrides the project's default for that one command) exists only on `character
 new`, `gen`, `repair`, `inbetween`, `jobs resume`, `serve` and `studio`; `character approve`, `export`,
-`ledger`, `analyze` and the listing commands reject it with exit 2 because they never call a provider.
+`ledger`, `analyze`, `models` and the listing commands reject it with exit 2 because they never call a provider.
 `init --mode` instead sets the project's default. `--yes/-y` (on `character new`, `gen`, `repair`,
 `inbetween`, `jobs resume`) auto-approves every approval prompt, including video calls and cap crossings.
 
 Contents: [init](#init) · [character new](#character-new) · [character approve / list](#character-approve--list)
 · [gen](#gen) · [repair](#repair) · [inbetween](#inbetween) · [export](#export) · [analyze](#analyze)
-· [jobs](#jobs) · [ledger](#ledger) · [keys](#keys) · [eval](#eval-maintainers-only) · [studio / serve](#studio--serve)
+· [jobs](#jobs) · [models](#models) · [ledger](#ledger) · [keys](#keys) · [eval](#eval-maintainers-only)
+· [studio / serve](#studio--serve)
 
 ## init
 
@@ -31,7 +32,8 @@ Creates `<path>` (conventionally `Name.sprites`) with `project.json`, `character
 | `--mode` | **`live`** | The project's default provider mode. Use `synthetic` for offline. |
 
 `project.json` also holds `settings.session_cap_usd` (10.0, spend in the last 24 h),
-`settings.job_cap_usd` (3.0) and `provider_mode`. Editing caps is the user's decision, not yours.
+`settings.job_cap_usd` (3.0), `provider_mode` and `settings.image_models` (see [models](#models)). Editing
+caps or image models is the user's decision, not yours.
 
 ## character new
 
@@ -70,8 +72,9 @@ folders remain in `jobs/`).
 - The character must be approved (else exit 2).
 - Defaults for frames/loop come from the action (walk loops, attack-melee doesn't). Override only for a reason.
 - **Route** depends on style and action: pixel loops use Retro Diffusion when a key exists, HD/painted loops
-  use MiniMax video, one-shots use a guided sheet on GPT Image 2.5, vector uses Quiver or GPT-6 Sol. The
-  chosen route is in the JSON (`route`).
+  use MiniMax video, one-shots use a guided sheet on the project's sprite-sheet model (GPT Image 2.5 unless
+  `models` says otherwise), vector uses Quiver or GPT-6 Sol. The chosen route is in the JSON (`route`); the
+  image models the job used are in the compile step (`steps[0].info.models`).
 - `--seed` changes the request, so it bypasses the cache and produces a new candidate.
 - `--replay` uses cached candidates only.
 - stdout JSON (the job state): `id`, `anim_id`, `state` (`done`|`failed`), `error`, `route`, `winner`,
@@ -83,11 +86,13 @@ folders remain in `jobs/`).
 
 `spriteguru repair <anim_id> --frame N [--kind pose|identity|frame] [--note TEXT]`
 
-Masked repair of frame N (**1-based**) on the latest job's winner. Guided-sheet routes only: on `video-loop`,
+Repair of frame N (**1-based**) on the latest job's winner. Guided-sheet routes only: on `video-loop`,
 `rd-loop` or vector routes it exits 1 ("... jobs repair by re-roll; run `spriteguru gen` again"). `pose` fixes a frame that doesn't follow
 its guide pose, `identity` pulls a drifted look back to the reference, `frame` is for other defects and takes
 `--note` describing what to fix. Re-analyses and re-exports; the repair is kept only if it doesn't score
-worse. JSON: `{job, candidate, before, after, kept, export}`. Bills in live mode (GPT Image 2.5).
+worse. JSON: `{job, candidate, before, after, kept, export}`. Bills in live mode on the project's current
+repair model (GPT Image 2.5 by default, a masked edit; the fal models take no mask, so they redraw the canvas
+and only the target frame is kept).
 
 ## inbetween
 
@@ -96,7 +101,7 @@ worse. JSON: `{job, candidate, before, after, kept, export}`. Bills in live mode
 Generates one extra frame between frame N and N+1 (**1-based**) and re-exports with `frames + 1`. It also
 resets `durations` in `animation.json` to a flat value (observed: 120/120/80/60/100/120 ms became 86 ms x 7). Guided-sheet
 routes only ("... jobs cannot insert generated in-betweens" otherwise). JSON:
-`{job, candidate, frames, score, export}`. Bills in live mode.
+`{job, candidate, frames, score, export}`. Bills in live mode on the project's current in-between model.
 
 ## export
 
@@ -125,6 +130,27 @@ contain: without them the analyser guesses the frame order and can add spurious 
 `awaiting_approval` (a crash or a killed process) from the last completed step; provider calls already made
 replay from the cache. It ignores jobs that ended `failed` (including a refused approval): for those, fix
 the cause and run `gen` again.
+
+## models
+
+`spriteguru models [--set TASK=MODEL ...] [--reset]`
+
+The image model for each task: `guided_sheet` (sprite sheets), `turnaround`, `repair`, `inbetween`. With no
+options it only lists them; stderr has one line per task with the model, maker and price, stdout the JSON
+`{"models": {task: model}, "available": [...]}`. No provider call.
+
+| Model | Provider | Price |
+| --- | --- | --- |
+| `gpt-image-2.5-flare` (sheets' default), `gpt-image-2.5-sunburst` (the others' default) | OpenAI | token-billed, about $0.05 per sheet-sized image |
+| `seedream-5.0-flash` | fal | $0.027 per image |
+| `seedream-5.0-pro` | fal | $0.0675 per image |
+| `seedream-5.0-lite` | fal | $0.035 per image (draws at 3.7 MP or more, resized back) |
+| `flux-2-max` | fal | $0.07 first MP + $0.03 per extra MP, inputs included: about $0.25 per candidate on a 2560x1024 sheet |
+
+`--set` (repeatable) stores a choice; picking a task's default removes the entry. `--reset` returns every task
+to its default. An unknown task or model exits 2 and lists the valid ones. Changing models changes what the
+user pays and what the art looks like, so only do it when they ask. A job keeps the models it compiled with,
+even through `jobs resume`; `repair` and `inbetween` use the current setting. A fal model needs the fal key.
 
 ## ledger
 

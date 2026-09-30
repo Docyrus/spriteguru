@@ -7,7 +7,7 @@ Contents: [Project layout](#project-layout) · [Scores and findings](#scores-and
 
 ```text
 Game.sprites/
-  project.json                     style, engine, fps, caps, provider_mode (shared config)
+  project.json                     style, engine, fps, caps, provider_mode, image models (shared config)
   .spriteguru/local.json           machine-local (active character, asset folder); gitignored
   ledger.jsonl                     every provider call, written before it is sent
   cache/                           provider outputs keyed by request; enables --replay and resume
@@ -75,6 +75,9 @@ network access. `SPRITEGURU_OFFLINE=1` skips the download and uses a built-in de
 | exit 1, `state: failed`, `budget: call to <model> (~$X) needs approval: <reason>` | approval wasn't given (non-interactive, no `--yes`) | show the user the model, estimate and reason; re-run the same `gen` with `--yes` only if they agree (paid calls already made replay from the cache; `jobs resume` won't pick up a `failed` job) |
 | `ProviderError: no OpenAI key: run spriteguru keys set openai` (or fal / Quiver / Retro Diffusion) | live mode, key missing | tell the user; or rehearse with `--mode synthetic` |
 | `ReplayMiss: replay mode: no cached output ...` | `--replay` with nothing cached | drop `--replay` (this will call providers, so ask first) |
+| `ProviderError: fal 4xx (<step>): <detail>` | fal refused the request (not retried; 429 and 5xx are retried for you) | report the detail; switching the task back to GPT Image with `models` is the user's call |
+| `<model> flagged the output as unsafe (...)` | fal's safety checker blocked the image | tell the user; rewording the description or picking another model is their decision |
+| compile notes say `image model <task>: <name> is not available any more; using the default` | `project.json` names a model the registry dropped | expected fallback; tell the user so they can pick again with `models` |
 | `state: done`, `accepted: false` | best-effort export | read findings, then repair, inbetween, or a new seed |
 | Pixel loop falls back to a guided sheet | no Retro Diffusion key (`RD_API_KEY`) | expected; mention it to the user |
 | Vector job waits on a download or `Executable doesn't exist` | no headless browser | `uv run playwright install chromium` (Linux: `--with-deps`); it also downloads once by itself |
